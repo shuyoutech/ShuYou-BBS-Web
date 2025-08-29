@@ -5,14 +5,11 @@ import vueI18n from '@intlify/unplugin-vue-i18n/vite'
 import vueLegacy from '@vitejs/plugin-legacy'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
-import boxen from 'boxen'
-import picocolors from 'picocolors'
 import Unocss from 'unocss/vite'
 import autoImport from 'unplugin-auto-import/vite'
 import TurboConsole from 'unplugin-turbo-console/vite'
 import components from 'unplugin-vue-components/vite'
 import { loadEnv } from 'vite'
-import AppLoading from 'vite-plugin-app-loading'
 import Archiver from 'vite-plugin-archiver'
 import banner from 'vite-plugin-banner'
 import { compression } from 'vite-plugin-compression2'
@@ -118,86 +115,12 @@ export default function createVitePlugins(mode: string, isBuild = false) {
       archiveType: viteEnv.VITE_BUILD_ARCHIVE,
     }),
 
-    AppLoading('loading.html'),
-
     // https://github.com/unplugin/unplugin-turbo-console
     TurboConsole(),
 
     // https://github.com/chengpeiquan/vite-plugin-banner
-    banner(`
-/**
- * 由 ShuYou-Admin 提供技术支持
- * Powered by ShuYou-Admin
- * https://www.shuyoutech.com
- */
-    `),
+    banner(` https://bbs.shuyoutech.com `),
 
-    {
-      name: 'vite-plugin-debug-plugin',
-      enforce: 'pre',
-      transform: (code, id) => {
-        if (/src\/main.ts$/.test(id)) {
-          if (viteEnv.VITE_APP_DEBUG_TOOL === 'eruda') {
-            code = code.concat(`
-              import eruda from 'eruda'
-              eruda.init()
-            `)
-          }
-          else if (viteEnv.VITE_APP_DEBUG_TOOL === 'vconsole') {
-            code = code.concat(`
-              import VConsole from 'vconsole'
-              new VConsole()
-            `)
-          }
-          return {
-            code,
-            map: null,
-          }
-        }
-      },
-    },
-
-    {
-      name: 'vite-plugin-disable-devtool',
-      enforce: 'pre',
-      transform: (code, id) => {
-        if (/src\/main.ts$/.test(id)) {
-          if (viteEnv.VITE_APP_DISABLE_DEVTOOL) {
-            // ?ddtk=example
-            code = code.concat(`
-              import DisableDevtool from 'disable-devtool'
-              DisableDevtool({
-                md5: '1a79a4d60de6718e8e5b326e338ae533',
-              })
-            `)
-          }
-          return {
-            code,
-            map: null,
-          }
-        }
-      },
-    },
-
-    {
-      name: 'vite-plugin-terminal-info',
-      apply: 'serve',
-      async buildStart() {
-        const { bold, green, magenta, bgGreen, underline } = picocolors
-        // eslint-disable-next-line no-console
-        console.log(
-          boxen(
-            `${bold(green(`由 ${bgGreen('ShuYou-Admin')} 驱动`))}\n\n${underline('https://www.shuyoutech.com')}\n\n当前使用：${magenta('专业版')}`,
-            {
-              padding: 1,
-              margin: 1,
-              borderStyle: 'double',
-              textAlignment: 'center',
-            },
-          ),
-        )
-      },
-    },
   ]
   return vitePlugins
 }

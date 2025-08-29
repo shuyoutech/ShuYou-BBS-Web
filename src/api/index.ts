@@ -1,6 +1,6 @@
 import axios from 'axios'
 // import qs from 'qs'
-import { toast } from 'vue-sonner'
+import {toast} from 'vue-sonner'
 
 // 请求重试配置
 const MAX_RETRY_COUNT = 3 // 最大重试次数
@@ -16,7 +16,7 @@ declare module 'axios' {
 
 const api = axios.create({
   baseURL: (import.meta.env.DEV && import.meta.env.VITE_OPEN_PROXY) ? '/proxy/' : import.meta.env.VITE_APP_API_BASEURL,
-  timeout: 1000 * 60,
+  timeout: 1000 * 300,
   responseType: 'json',
 })
 
@@ -32,12 +32,6 @@ api.interceptors.request.use(
         request.headers.satoken = userStore.token
       }
     }
-    // 是否将 POST 请求参数进行字符串化处理
-    if (request.method === 'post') {
-      // request.data = qs.stringify(request.data, {
-      //   arrayFormat: 'brackets',
-      // })
-    }
     return request
   },
 )
@@ -52,14 +46,11 @@ function handleError(error: any) {
   let message = error.msg
   if (message === 'Network Error') {
     message = '后端网络故障'
-  }
-  else if (message.includes('timeout')) {
+  } else if (message.includes('timeout')) {
     message = '接口请求超时'
-  }
-  else if (message.includes('Request failed with status code')) {
-    message = `接口${message.substr(message.length - 3)}异常`
-  }
-  else if (error.code === 500 && message.includes('token 无效')) {
+  } else if (message.includes('Request failed with status code')) {
+    message = `接口${message.substring(message.length - 3)}异常`
+  } else if (error.code === 500 && message.includes('token 无效')) {
     useUserStore().requestLogout()
   }
   toast.error('Error', {

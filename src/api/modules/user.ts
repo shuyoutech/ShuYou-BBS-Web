@@ -19,7 +19,7 @@ export default {
   logout: () => api.post('/auth/logout'),
 
   // 获取用户信息
-  getPersonalInfo: () => api.post('/user/getProfile'),
+  getUserInfo: () => api.post('/user/getProfile'),
   // 修改用户信息
   editUserInfo: (data: {
     nickname: string

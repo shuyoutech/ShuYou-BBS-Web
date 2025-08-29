@@ -14,7 +14,7 @@ export const useWatermarkStore = defineStore(
         return Object.assign(
           {
             contentType: 'multi-line-text',
-            content: `ShuYou-Admin\n当前用户：${userStore.account}`,
+            content: `用户：${userStore.account}`,
             fontColor: settingsStore.currentColorScheme === 'light' ? '#000' : '#fff',
             globalAlpha: 0.1,
             width: 200,
@@ -39,7 +39,7 @@ export const useWatermarkStore = defineStore(
 
     watch(settings, async () => {
       if (settingsStore.settings.app.enableWatermark && await watermark.check()) {
-        watermark.changeOptions(settings.value)
+        await watermark.changeOptions(settings.value)
       }
     }, {
       deep: true,
@@ -59,7 +59,7 @@ export const useWatermarkStore = defineStore(
     watch(() => settingsStore.currentColorScheme, async () => {
       if (settingsStore.settings.app.enableWatermark && await watermark.check()) {
         await nextTick()
-        watermark.changeOptions(settings.value)
+        await watermark.changeOptions(settings.value)
       }
     })
 
