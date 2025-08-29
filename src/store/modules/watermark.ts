@@ -14,7 +14,7 @@ export const useWatermarkStore = defineStore(
         return Object.assign(
           {
             contentType: 'multi-line-text',
-            content: `Fantastic-admin\n当前用户：${userStore.account}`,
+            content: `ShuYou-Admin\n当前用户：${userStore.account}`,
             fontColor: settingsStore.currentColorScheme === 'light' ? '#000' : '#fff',
             globalAlpha: 0.1,
             width: 200,
