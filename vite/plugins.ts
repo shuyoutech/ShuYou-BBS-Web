@@ -128,7 +128,7 @@ export default function createVitePlugins(mode: string, isBuild = false) {
 /**
  * 由 ShuYou-Admin 提供技术支持
  * Powered by ShuYou-Admin
- * https://ShuYou-Admin.hurui.me
+ * https://www.shuyoutech.com
  */
     `),
 
@@ -187,7 +187,7 @@ export default function createVitePlugins(mode: string, isBuild = false) {
         // eslint-disable-next-line no-console
         console.log(
           boxen(
-            `${bold(green(`由 ${bgGreen('ShuYou-Admin')} 驱动`))}\n\n${underline('https://ShuYou-Admin.hurui.me')}\n\n当前使用：${magenta('专业版')}`,
+            `${bold(green(`由 ${bgGreen('ShuYou-Admin')} 驱动`))}\n\n${underline('https://www.shuyoutech.com')}\n\n当前使用：${magenta('专业版')}`,
             {
               padding: 1,
               margin: 1,

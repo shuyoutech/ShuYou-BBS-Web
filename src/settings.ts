@@ -51,7 +51,7 @@ const globalSettings: Settings.all = {
     enable: true,
     dates: '2025-present',
     company: '苏州数游科技有限公司',
-    website: 'https://ShuYou-Admin.hurui.me',
+    website: 'https://www.shuyoutech.com',
   },
 }
 

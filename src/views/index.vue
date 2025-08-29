@@ -31,12 +31,12 @@ const fantasticAdminInfo = ref({
   imageVisible: false,
   index: 0,
   data: [
-    'https://ShuYou-Admin.hurui.me/preview1.png',
-    'https://ShuYou-Admin.hurui.me/preview2.png',
-    'https://ShuYou-Admin.hurui.me/preview3.png',
-    'https://ShuYou-Admin.hurui.me/preview4.png',
-    'https://ShuYou-Admin.hurui.me/preview5.png',
-    'https://ShuYou-Admin.hurui.me/preview6.png',
+    'https://www.shuyoutech.com/preview1.png',
+    'https://www.shuyoutech.com/preview2.png',
+    'https://www.shuyoutech.com/preview3.png',
+    'https://www.shuyoutech.com/preview4.png',
+    'https://www.shuyoutech.com/preview5.png',
+    'https://www.shuyoutech.com/preview6.png',
   ],
 })
 
@@ -83,7 +83,7 @@ function open(url: string) {
         </div>
       </template>
       <div class="flex gap-2">
-        <FaButton variant="outline" @click="open('https://ShuYou-Admin.hurui.me')">
+        <FaButton variant="outline" @click="open('https://www.shuyoutech.com')">
           <FaIcon name="i-ri:file-text-line" />
           开发文档
         </FaButton>
@@ -130,7 +130,7 @@ function open(url: string) {
       <FaPageMain class="m-0 flex-1" title-class="flex flex-wrap items-center justify-between gap-4" main-class="flex-1">
         <template #title>
           <div class="title-info">
-            <img src="https://ShuYou-Admin.hurui.me/logo.svg">
+            <img src="https://www.shuyoutech.com/logo.svg">
             <div>
               <h1 class="c-[#41b883]">
                 ShuYou-Admin
@@ -139,7 +139,7 @@ function open(url: string) {
             </div>
           </div>
           <div class="ms-auto">
-            <FaButton @click="open('https://ShuYou-Admin.hurui.me')">
+            <FaButton @click="open('https://www.shuyoutech.com')">
               访问官网
             </FaButton>
           </div>
