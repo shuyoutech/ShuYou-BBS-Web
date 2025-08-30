@@ -308,7 +308,7 @@ const getQrcode = async () => {
 html body .el-dialog.ai-login-modal {
   height: 60vh !important;
   max-height: 60vh !important;
-  border-radius: 0 !important;
+  border-radius: 16px !important;
   box-shadow: none !important;
   border: none !important;
   background: transparent !important;
@@ -330,7 +330,8 @@ html body .el-dialog.ai-login-modal .el-dialog__body {
   height: 60vh !important;
   max-height: 60vh !important;
   background: transparent !important;
-  overflow: visible !important;
+  overflow: hidden !important;
+  border-radius: 16px !important;
 }
 
 html body .el-dialog.ai-login-modal .el-dialog__header {
@@ -346,18 +347,19 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
   html body .el-dialog.ai-login-modal {
     height: 60vh !important;
     max-height: 60vh !important;
-    border-radius: 0 !important;
+    border-radius: 16px !important;
     box-shadow: none !important;
     border: none !important;
     background: transparent !important;
-    overflow: visible !important;
+    overflow: hidden !important;
   }
-  
+
   html body .el-dialog.ai-login-modal .el-dialog__body {
     background: transparent !important;
-    overflow: visible !important;
+    overflow: hidden !important;
+    border-radius: 16px !important;
   }
-  
+
   html body .el-dialog.ai-login-modal .el-dialog__wrapper {
     background: transparent !important;
   }
@@ -417,6 +419,7 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
   overflow: hidden;
   position: relative;
   backdrop-filter: blur(20px);
+  border-radius: 16px;
 }
 
 /* 左侧功能展示区 */
@@ -428,8 +431,9 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
   position: relative;
   background: linear-gradient(135deg, #1a1a3a 0%, #2d1b69 50%, #4c1d95 100%);
   position: relative;
-  overflow: visible;
+  overflow: hidden;
   padding: 2rem 0 4rem 0;
+  border-radius: 16px 0 0 16px;
 }
 
 .left-section::before {
@@ -678,6 +682,8 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
   backdrop-filter: blur(25px);
   min-width: 400px;
   border-left: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0 16px 16px 0;
+  overflow: hidden;
 }
 
 .login-panel {
@@ -1067,10 +1073,10 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
     width: 95% !important;
     height: 60vh !important;
     margin: 20vh auto !important;
-    border-radius: 0 !important;
+    border-radius: 16px !important;
     box-shadow: none !important;
     border: none !important;
-    overflow: visible !important;
+    overflow: hidden !important;
   }
 
   .login-page {
