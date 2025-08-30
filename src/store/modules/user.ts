@@ -1,5 +1,6 @@
-import apiUser from '@/api/modules/user'
 import router from '@/router'
+import {authAccessToken, authLogout, authSmsLogin} from "@/api/auth";
+import {memberGetProfile} from "@/api/member";
 
 export const useUserStore = defineStore(
   // 唯一ID
@@ -14,23 +15,37 @@ export const useUserStore = defineStore(
       return !!token.value;
     })
 
-    // 登录
-    async function login(data: {
-      account: string
-      password: string
+    // 第三方扫码登录
+    async function accessToken(data: {
+      code: string
     }) {
-      const res = await apiUser.login({username: data.account, password: data.password})
-      localStorage.setItem('account', data.account)
+      const res = await authAccessToken({
+        socialType: '01',
+        code: data.code,
+      });
       localStorage.setItem('token', res.data.accessToken)
       localStorage.setItem('userId', res.data.userId)
-      account.value = data.account
+      token.value = res.data.accessToken
+      await getUserInfo()
+    }
+
+    // 手机短息登录
+    async function smsLogin(data: {
+      mobile: string
+      code: string
+    }) {
+      const res = await authSmsLogin({mobile: data.mobile, code: data.code});
+      localStorage.setItem('account', data.mobile)
+      localStorage.setItem('token', res.data.accessToken)
+      localStorage.setItem('userId', res.data.userId)
+      account.value = data.mobile
       token.value = res.data.accessToken
       await getUserInfo()
     }
 
     // 手动登出
     async function logout() {
-      await apiUser.logout()
+      await authLogout()
       // 此处仅清除计算属性 isLogin 中判断登录状态过期的变量，以保证在弹出登录窗口模式下页面展示依旧正常
       localStorage.removeItem('token')
       token.value = ''
@@ -60,23 +75,9 @@ export const useUserStore = defineStore(
       permissions.value = []
     }
 
-    // 获取权限
-    async function getPermissions() {
-      const res = await apiUser.permission()
-      permissions.value = res.data
-    }
-
-    // 修改密码
-    async function editPassword(data: {
-      password: string
-      newPassword: string
-    }) {
-      await apiUser.passwordEdit({oldPassword: data.password, newPassword: data.newPassword})
-    }
-
     // 获取用户信息
     async function getUserInfo() {
-      const res = await apiUser.getUserInfo()
+      const res = await memberGetProfile()
       localStorage.setItem('userInfo', JSON.stringify(res.data))
       localStorage.setItem('avatar', res.data.avatar)
       avatar.value = res.data.avatar
@@ -90,11 +91,11 @@ export const useUserStore = defineStore(
       permissions,
       userInfo,
       isLogin,
-      login,
+      smsLogin,
       logout,
       requestLogout,
-      getPermissions,
-      editPassword,
+      getUserInfo,
+      accessToken,
     }
   },
 )

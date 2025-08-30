@@ -90,6 +90,7 @@ declare global {
   const useRouteStore: typeof import('../store/modules/route')['useRouteStore']
   const useRouter: typeof import('vue-router')['useRouter']
   const useSettingsStore: typeof import('../store/modules/settings')['useSettingsStore']
+  const useShareStore: typeof import('../store/modules/share')['useShareStore']
   const useSlots: typeof import('vue')['useSlots']
   const useTabbar: typeof import('../utils/composables/useTabbar')['default']
   const useTabbarStore: typeof import('../store/modules/tabbar')['useTabbarStore']
