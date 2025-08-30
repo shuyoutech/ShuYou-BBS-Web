@@ -192,8 +192,8 @@ const aiFeatures = [
   {name: '游戏指南', icon: 'i-mdi:play-circle', position: 'top'},
   {name: '游戏捏脸', icon: 'i-mdi:presentation', position: 'top-left'},
   {name: '游戏商城', icon: 'i-mdi:sail-boat', position: 'top-right'},
-  {name: '游戏百科', icon: 'i-mdi:account', position: 'bottom-center'},
-  {name: '游戏公会', icon: 'i-mdi:chat', position: 'bottom-center-2'},
+  {name: '游戏百科', icon: 'i-mdi:account', position: 'bottom-left'},
+  {name: '游戏公会', icon: 'i-mdi:chat', position: 'bottom-right'},
 ]
 
 const onPhoneSubmit = async (e: Event) => {
@@ -596,14 +596,10 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
 
 /* AI功能按钮 */
 .ai-features {
-  position: relative;
-  width: 320px;
-  height: 400px;
-  margin: -0.5rem auto 0;
+  margin: auto;
 }
 
 .feature-btn {
-  position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -632,44 +628,6 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
   font-size: 1.2rem;
   color: #a855f7;
   filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.6));
-}
-
-.feature-btn.top {
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.feature-btn.top-left {
-  top: 20%;
-  left: 10%;
-}
-
-.feature-btn.top-right {
-  top: 20%;
-  right: 10%;
-}
-
-.feature-btn.bottom-left {
-  bottom: 20%;
-  left: 10%;
-}
-
-.feature-btn.bottom-right {
-  bottom: 20%;
-  right: 10%;
-}
-
-.feature-btn.bottom-center {
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.feature-btn.bottom-center-2 {
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
 }
 
 /* 右侧登录面板 */
