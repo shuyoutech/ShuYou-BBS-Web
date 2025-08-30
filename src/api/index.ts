@@ -23,11 +23,9 @@ const api = axios.create({
 api.interceptors.request.use(
   (request) => {
     // 全局拦截请求发送前提交的参数
-    const settingsStore = useSettingsStore()
     const userStore = useUserStore()
     // 设置请求头
     if (request.headers) {
-      request.headers['Accept-Language'] = settingsStore.lang
       if (userStore.isLogin) {
         request.headers.satoken = userStore.token
       }

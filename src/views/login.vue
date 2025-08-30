@@ -1,17 +1,17 @@
 <template>
   <el-dialog
-    :model-value="visible"
-    @update:model-value="$emit('update:visible', $event)"
-    :show-close="false"
-    :close-on-click-modal="false"
-    :close-on-press-escape="false"
-    width="50%"
-    class="ai-login-modal"
+      :model-value="visible"
+      @update:model-value="$emit('update:visible', $event)"
+      :show-close="false"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      width="50%"
+      class="ai-login-modal"
   >
     <div class="login-page">
       <!-- 关闭按钮 -->
       <button class="close-btn" @click="handleClose">
-        <FaIcon name="i-mdi:close" />
+        <FaIcon name="i-mdi:close"/>
       </button>
 
       <!-- 左侧功能展示区 -->
@@ -35,12 +35,12 @@
           <!-- AI功能按钮 -->
           <div class="ai-features">
             <div
-              v-for="feature in aiFeatures"
-              :key="feature.name"
-              class="feature-btn"
-              :class="feature.position"
+                v-for="feature in aiFeatures"
+                :key="feature.name"
+                class="feature-btn"
+                :class="feature.position"
             >
-              <FaIcon :name="feature.icon" class="feature-icon" />
+              <FaIcon :name="feature.icon" class="feature-icon"/>
               <span>{{ feature.name }}</span>
             </div>
           </div>
@@ -52,23 +52,23 @@
         <div class="login-panel">
           <div class="brand">
             <div class="logo">
-              <FaIcon name="i-mdi:brain" class="logo-icon" />
+              <FaIcon name="i-mdi:brain" class="logo-icon"/>
             </div>
             <h2 class="brand-name">数游论坛</h2>
           </div>
 
           <div class="login-tabs">
             <button
-              class="tab-btn"
-              :class="{ active: loginType === 'wechat' }"
-              @click="loginType = 'wechat'"
+                class="tab-btn"
+                :class="{ active: loginType === 'wechat' }"
+                @click="getQrcode"
             >
               微信登录
             </button>
             <button
-              class="tab-btn"
-              :class="{ active: loginType === 'phone' }"
-              @click="loginType = 'phone'"
+                class="tab-btn"
+                :class="{ active: loginType === 'phone' }"
+                @click="loginType = 'phone'"
             >
               手机登录
             </button>
@@ -88,7 +88,7 @@
             </div>
             <div class="qr-instructions">
               <div class="instruction-item">
-                <FaIcon name="i-mdi:wechat" class="wechat-icon" />
+                <FaIcon name="i-mdi:wechat" class="wechat-icon"/>
                 <span>打开【手机微信】扫一扫登录更方便</span>
               </div>
             </div>
@@ -98,25 +98,25 @@
             <form @submit="onPhoneSubmit">
               <div class="form-item">
                 <input
-                  type="tel"
-                  placeholder="请输入手机号"
-                  class="phone-input"
-                  v-model="phoneForm.phone"
+                    type="tel"
+                    placeholder="请输入手机号"
+                    class="phone-input"
+                    v-model="phoneForm.phone"
                 />
               </div>
 
               <div class="form-item">
                 <div class="code-input-group">
                   <input
-                    type="text"
-                    placeholder="请输入验证码"
-                    class="code-input"
-                    v-model="phoneForm.code"
+                      type="text"
+                      placeholder="请输入验证码"
+                      class="code-input"
+                      v-model="phoneForm.code"
                   />
                   <button
-                    type="button"
-                    class="send-code-btn"
-                    @click="sendCode"
+                      type="button"
+                      class="send-code-btn"
+                      @click="sendCode"
                   >
                     发送验证码
                   </button>
@@ -124,9 +124,9 @@
               </div>
 
               <button
-                :disabled="loading"
-                class="login-btn"
-                type="submit"
+                  :disabled="loading"
+                  class="login-btn"
+                  type="submit"
               >
                 {{ loading ? '登录中...' : '登录' }}
               </button>
@@ -148,8 +148,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import {ref} from 'vue'
+import {ElMessage} from 'element-plus'
 import apiAuth from '@/api/modules/auth'
 
 interface Props {
@@ -158,6 +158,7 @@ interface Props {
 
 interface Emits {
   (e: 'update:visible', value: boolean): void
+
   (e: 'login-success', userData: any): void
 }
 
@@ -174,64 +175,117 @@ const phoneForm = ref({
 })
 
 const aiFeatures = [
-  { name: '游戏指南', icon: 'i-mdi:play-circle', position: 'top' },
-  { name: '游戏捏脸', icon: 'i-mdi:presentation', position: 'top-left' },
-  { name: '游戏商城', icon: 'i-mdi:sail-boat', position: 'top-right' },
-  { name: '游戏百科', icon: 'i-mdi:account', position: 'bottom-left' },
-  { name: '游戏公会', icon: 'i-mdi:chat', position: 'bottom-right' },
+  {name: '游戏指南', icon: 'i-mdi:play-circle', position: 'top'},
+  {name: '游戏捏脸', icon: 'i-mdi:presentation', position: 'top-left'},
+  {name: '游戏商城', icon: 'i-mdi:sail-boat', position: 'top-right'},
+  {name: '游戏百科', icon: 'i-mdi:account', position: 'bottom-left'},
+  {name: '游戏公会', icon: 'i-mdi:chat', position: 'bottom-right'},
 ]
 
 const onPhoneSubmit = async (e: Event) => {
   e.preventDefault()
+
+  if (!phoneForm.value.phone || !phoneForm.value.code) {
+    ElMessage.error('请填写完整的手机号和验证码')
+    return
+  }
+
   loading.value = true
-  console.log('登录信息:', phoneForm.value)
 
   try {
-    // 模拟登录成功
-    const mockUserInfo = {
-      id: 1,
-      nickname: '测试用户',
-      avatar: 'https://via.placeholder.com/40x40/8b5cf6/ffffff?text=U',
-      phone: phoneForm.value.phone
-    }
+    console.log('调用手机号登录接口:', {
+      mobile: phoneForm.value.phone,
+      code: phoneForm.value.code
+    })
 
-    // 保存用户信息到本地存储
-    localStorage.setItem('token', 'mock-token-' + Date.now())
-    localStorage.setItem('userInfo', JSON.stringify(mockUserInfo))
-    localStorage.setItem('avatar', mockUserInfo.avatar)
+    const response = await apiAuth.smsLogin({
+      mobile: phoneForm.value.phone,
+      code: phoneForm.value.code
+    })
 
-    console.log('登录成功，用户信息已保存')
+    console.log('手机号登录响应:', response)
 
-    // 登录成功
-    setTimeout(() => {
-      loading.value = false
+    // 处理API响应
+    const result = response as any
+    if (result && result.code === 200) {
+      // 登录成功，保存用户信息
+      const userInfo = result.data
+      localStorage.setItem('token', userInfo.token)
+      localStorage.setItem('userInfo', JSON.stringify(userInfo))
+      localStorage.setItem('avatar', userInfo.avatar || '')
+
       ElMessage.success('登录成功！')
-      emit('login-success', mockUserInfo)
+      emit('login-success', userInfo)
       handleClose()
-    }, 1000)
-
+    } else {
+      ElMessage.error(result?.msg || '登录失败')
+    }
   } catch (error) {
     console.error('登录失败:', error)
+    ElMessage.error('登录失败，请重试')
+  } finally {
     loading.value = false
   }
 }
 
-const sendCode = () => {
+const sendCode = async () => {
   const phone = phoneForm.value.phone
-  if (!phone || phone.length !== 11) return
-  console.log('发送验证码到:', phone)
-  ElMessage.success('验证码已发送')
+
+  if (!phone) {
+    ElMessage.error('请输入手机号')
+    return
+  }
+
+  if (phone.length !== 11) {
+    ElMessage.error('请输入正确的手机号')
+    return
+  }
+
+  try {
+    console.log('调用发送验证码接口:', {
+      mobile: phone,
+      templateCode: 'LOGIN_CODE'
+    })
+
+    const response = await apiAuth.sendSms({
+      mobile: phone,
+      templateCode: 'LOGIN_CODE'
+    })
+
+    console.log('发送验证码响应:', response)
+
+    const result = response as any
+    if (result && result.code === 200) {
+      ElMessage.success('验证码已发送')
+    } else {
+      ElMessage.error(result?.msg || '发送失败')
+    }
+  } catch (error) {
+    console.error('发送验证码失败:', error)
+    ElMessage.error('发送验证码失败，请重试')
+  }
 }
 
 const handleClose = () => {
   emit('update:visible', false)
 }
 
-function getQrcode() {
-  let res = apiAuth.authorize({
-    socialType: '01'
-  });
-  qrCodeUrl.value = res.data
+const getQrcode = async () => {
+  loginType.value = 'wechat'
+  try {
+    const response = await apiAuth.authorize({
+      socialType: '01'
+    })
+    const result = response as any
+    if (result) {
+      qrCodeUrl.value = result.data
+    } else {
+      ElMessage.error(result?.msg || '获取二维码失败')
+    }
+  } catch (error) {
+    console.error('获取微信二维码失败:', error)
+    ElMessage.error('获取二维码失败，请重试')
+  }
 }
 </script>
 
@@ -276,10 +330,9 @@ function getQrcode() {
   left: 0;
   right: 0;
   bottom: 0;
-  background:
-    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+  background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+  radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+  radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
   pointer-events: none;
 }
 
@@ -386,8 +439,12 @@ function getQrcode() {
 }
 
 @keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes pulse {
@@ -625,6 +682,22 @@ function getQrcode() {
 .wechat-icon {
   color: #07c160;
   font-size: 1.25rem;
+}
+
+.get-qr-btn {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(7, 193, 96, 0.2);
+  border: 1px solid rgba(7, 193, 96, 0.3);
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.get-qr-btn:hover {
+  background: rgba(7, 193, 96, 0.3);
+  border-color: rgba(7, 193, 96, 0.5);
 }
 
 .proxy-notice {
