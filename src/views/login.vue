@@ -208,7 +208,7 @@ const userStore = useUserStore()
 watch(
   () => shareStore.code,
   (newValue) => {
-    console.log(newValue)
+    console.log("accessToken =========== code:",newValue)
     if (newValue) {
       userStore.accessToken({
         code: newValue,
@@ -258,10 +258,11 @@ const getQrCode = async () => {
   try {
     const response = await authAuthorize({
       socialType: '01',
-      callBackSuffix: 'local/wechat/callback',
+      callBackSuffix: 'bbs/wechat/callback',
     })
     if (response.data) {
       qrCodeUrl.value = response.data
+      console.log("getQrCode =========== qrCodeUrl:",qrCodeUrl.value)
     } else {
       ElMessage.error('获取二维码失败')
     }

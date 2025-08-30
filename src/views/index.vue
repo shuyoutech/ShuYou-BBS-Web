@@ -169,6 +169,7 @@ import {useRouter} from 'vue-router'
 import {ElMessage} from 'element-plus'
 import Login from '@/views/login.vue'
 import Profile from '@/views/profile.vue'
+import {useUserStore} from "@/store/modules/user.ts";
 
 const router = useRouter()
 
@@ -177,15 +178,9 @@ const currentFilter = ref('all')
 const currentPage = ref(1)
 const pageSize = ref(10)
 
-const isLogin = computed(() => {
-  return !!localStorage.getItem('token')
-})
-const avatar = computed(() => {
-  return localStorage.getItem('avatar')
-})
-const nickname = computed(() => {
-  return localStorage.getItem('nickname')
-})
+const isLogin = ref(false)
+const avatar = ref('')
+const nickname = ref('')
 
 const totalPosts = ref(0)
 const hotPosts = ref<any[]>([])
@@ -305,8 +300,9 @@ const handleLoginSuccess = (userData: any) => {
   showAiLoginModal.value = false
   ElMessage.success('登录成功！')
   console.log('登录成功，用户信息:', userData)
-
-  showProfileModal.value = true
+  avatar.value = localStorage.getItem('avatar') || ''
+  nickname.value = userData.nickname
+  isLogin.value = true
 }
 
 const handleSizeChange = (size: number) => {
@@ -317,6 +313,7 @@ const handleCurrentChange = (page: number) => {
   currentPage.value = page
 }
 
+const userStore = useUserStore()
 // 生命周期
 onMounted(() => {
   // 初始化模拟数据
@@ -328,6 +325,22 @@ onMounted(() => {
   ]
   totalPosts.value = mockPosts.value.length
 })
+
+watch(
+  () => userStore.isLogin,
+  (newValue) => {
+    if (newValue) {
+      isLogin.value = userStore.isLogin
+      avatar.value = userStore.avatar
+      nickname.value = userStore.nickname
+    } else {
+      isLogin.value = false
+      avatar.value = ''
+      nickname.value = ''
+    }
+  }
+);
+
 </script>
 
 <style scoped>
