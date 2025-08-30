@@ -28,6 +28,8 @@ router.beforeEach((to, _from, next) => {
     shareStore.code = String(query.code ?? '')
     shareStore.state = String(query.state ?? '')
     console.log("router ===========  code:", shareStore.code)
+    // 跳转到首页，让首页处理登录逻辑
+    next('/')
     return
   }
   next()

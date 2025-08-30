@@ -198,9 +198,15 @@ const aiFeatures = [
   {name: '游戏公会', icon: 'i-mdi:account-group', position: 'bottom-right'},
 ]
 
-onMounted(() => {
-  getQrCode()
-});
+watch(
+  () => props.visible,
+  (newVal) => {
+    console.log("visible =========== newVal:", newVal)
+    if (newVal) {
+      getQrCode()
+    }
+  });
+
 
 const shareStore = useShareStore()
 const userStore = useUserStore()
@@ -208,12 +214,16 @@ const userStore = useUserStore()
 watch(
   () => shareStore.code,
   (newValue) => {
-    console.log("accessToken =========== code:",newValue)
+    console.log("accessToken =========== code:", newValue)
     if (newValue) {
       userStore.accessToken({
         code: newValue,
       }).then(() => {
         emit('login-success', userStore.userInfo)
+        handleClose() // 登录成功后关闭登录弹窗
+      }).catch((error) => {
+        console.error('微信登录失败:', error)
+        ElMessage.error('微信登录失败，请重试')
       })
     }
   }
@@ -262,7 +272,7 @@ const getQrCode = async () => {
     })
     if (response.data) {
       qrCodeUrl.value = response.data
-      console.log("getQrCode =========== qrCodeUrl:",qrCodeUrl.value)
+      console.log("getQrCode =========== qrCodeUrl:", qrCodeUrl.value)
     } else {
       ElMessage.error('获取二维码失败')
     }

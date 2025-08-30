@@ -303,6 +303,10 @@ const handleLoginSuccess = (userData: any) => {
   avatar.value = localStorage.getItem('avatar') || ''
   nickname.value = userData.nickname
   isLogin.value = true
+  
+  // 登录成功后刷新页面数据或跳转到其他页面
+  // 这里可以根据需要跳转到用户中心或其他页面
+  // router.push('/profile') // 如果需要跳转到个人中心
 }
 
 const handleSizeChange = (size: number) => {
