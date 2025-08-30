@@ -4,7 +4,7 @@
     <div class="bbs-header">
       <div class="header-content">
         <div class="logo">
-          <img src="@/assets/images/logo.svg" alt="BBS Logo" class="logo-img" />
+          <img src="@/assets/images/logo.svg" alt="BBS Logo" class="logo-img"/>
           <span class="logo-text">数游论坛</span>
         </div>
         <div class="nav-menu">
@@ -22,9 +22,8 @@
             </button>
           </div>
           <div v-else class="user-info">
-            <img :src="userInfo?.avatar" :alt="userInfo?.nickname" class="user-avatar" />
-            <span class="user-name">{{ userInfo?.nickname }}</span>
-            <button class="btn btn-logout" @click="logout">退出</button>
+            <img :src="userInfo?.avatar" :alt="userInfo?.nickname" class="user-avatar" @click="goToProfile"/>
+            <span class="user-name" @click="goToProfile">{{ userInfo?.nickname }}</span>
           </div>
         </div>
       </div>
@@ -39,7 +38,7 @@
           <div class="banner-section">
             <el-carousel height="200px" indicator-position="outside">
               <el-carousel-item v-for="banner in banners" :key="banner.id">
-                <img :src="banner.image" :alt="banner.title" class="banner-image" />
+                <img :src="banner.image" :alt="banner.title" class="banner-image"/>
               </el-carousel-item>
             </el-carousel>
           </div>
@@ -68,7 +67,7 @@
                 @click="viewPost(post.id)"
               >
                 <div class="post-avatar">
-                  <img :src="post.author.avatar" :alt="post.author.nickname" />
+                  <img :src="post.author.avatar" :alt="post.author.nickname"/>
                 </div>
                 <div class="post-content">
                   <div class="post-title">{{ post.title }}</div>
@@ -141,7 +140,7 @@
                 :key="user.id"
                 class="active-user-item"
               >
-                <img :src="user.avatar" :alt="user.nickname" class="user-avatar-small" />
+                <img :src="user.avatar" :alt="user.nickname" class="user-avatar-small"/>
                 <span class="user-name-small">{{ user.nickname }}</span>
                 <span class="user-level">{{ user.level }}</span>
               </div>
@@ -157,14 +156,20 @@
       @login-success="handleLoginSuccess"
     />
 
+    <!-- 个人中心弹窗 -->
+    <Profile
+      v-model:visible="showProfileModal"
+    />
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import {ref, computed, onMounted} from 'vue'
+import {useRouter} from 'vue-router'
+import {ElMessage} from 'element-plus'
 import Login from '@/views/login.vue'
+import Profile from '@/views/profile.vue'
 
 const router = useRouter()
 
@@ -208,7 +213,7 @@ const mockPosts = ref([
     id: '1',
     title: '欢迎来到书友论坛！',
     content: '这是一个全新的论坛平台，欢迎大家在这里分享知识、交流经验。',
-    author: { nickname: '管理员', avatar: 'https://picsum.photos/50/50?random=1' },
+    author: {nickname: '管理员', avatar: 'https://picsum.photos/50/50?random=1'},
     category: 'news',
     viewCount: 156,
     commentCount: 23,
@@ -219,7 +224,7 @@ const mockPosts = ref([
     id: '2',
     title: '如何提高编程效率？',
     content: '分享一些提高编程效率的小技巧和工具推荐...',
-    author: { nickname: '程序员小王', avatar: 'https://picsum.photos/50/50?random=2' },
+    author: {nickname: '程序员小王', avatar: 'https://picsum.photos/50/50?random=2'},
     category: 'strategy',
     viewCount: 89,
     commentCount: 12,
@@ -230,7 +235,7 @@ const mockPosts = ref([
     id: '3',
     title: '前端框架选择讨论',
     content: 'Vue、React、Angular，你更倾向于哪个框架？',
-    author: { nickname: '前端达人', avatar: 'https://picsum.photos/50/50?random=3' },
+    author: {nickname: '前端达人', avatar: 'https://picsum.photos/50/50?random=3'},
     category: 'discussion',
     viewCount: 234,
     commentCount: 56,
@@ -249,11 +254,11 @@ const filteredPosts = computed(() => {
 
 // 筛选标签
 const filterTabs = [
-  { key: 'all', label: '全部' },
-  { key: 'strategy', label: '攻略' },
-  { key: 'news', label: '新闻' },
-  { key: 'discussion', label: '讨论' },
-  { key: 'share', label: '分享' }
+  {key: 'all', label: '全部'},
+  {key: 'strategy', label: '攻略'},
+  {key: 'news', label: '新闻'},
+  {key: 'discussion', label: '讨论'},
+  {key: 'share', label: '分享'}
 ]
 
 // 方法
@@ -284,29 +289,24 @@ const viewPost = (postId: string) => {
   router.push(`/bbs/post/${postId}`)
 }
 
-
-
-const logout = () => {
-  // 清除本地存储
-  localStorage.removeItem('token')
-  localStorage.removeItem('userInfo')
-  localStorage.removeItem('avatar')
-
-  ElMessage.success('已退出登录')
-  // 刷新页面以更新UI
-  window.location.reload()
-}
-
 const showAiLoginModal = ref(false)
+const showProfileModal = ref(false)
+
 
 const goToLogin = () => {
   showAiLoginModal.value = true
+}
+
+const goToProfile = () => {
+  showProfileModal.value = true
 }
 
 const handleLoginSuccess = (userData: any) => {
   showAiLoginModal.value = false
   ElMessage.success('登录成功！')
   console.log('登录成功，用户信息:', userData)
+
+  showProfileModal.value = true
 }
 
 const handleSizeChange = (size: number) => {
@@ -319,18 +319,12 @@ const handleCurrentChange = (page: number) => {
 
 // 生命周期
 onMounted(() => {
-  // 设置模拟登录状态，避免被重定向到登录页
-  if (!localStorage.getItem('token')) {
-    localStorage.setItem('token', 'mock-token')
-    localStorage.setItem('account', 'admin')
-  }
-
   // 初始化模拟数据
   hotPosts.value = mockPosts.value.slice(0, 3)
   activeUsers.value = [
-    { id: '1', nickname: '活跃用户1', avatar: 'https://picsum.photos/32/32?random=10', level: '高级' },
-    { id: '2', nickname: '活跃用户2', avatar: 'https://picsum.photos/32/32?random=11', level: '中级' },
-    { id: '3', nickname: '活跃用户3', avatar: 'https://picsum.photos/32/32?random=12', level: '新手' },
+    {id: '1', nickname: '活跃用户1', avatar: 'https://picsum.photos/32/32?random=10', level: '高级'},
+    {id: '2', nickname: '活跃用户2', avatar: 'https://picsum.photos/32/32?random=11', level: '中级'},
+    {id: '3', nickname: '活跃用户3', avatar: 'https://picsum.photos/32/32?random=12', level: '新手'},
   ]
   totalPosts.value = mockPosts.value.length
 })
@@ -444,10 +438,24 @@ onMounted(() => {
   height: 32px;
   border-radius: 50%;
   object-fit: cover;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.user-avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
 .user-name {
   font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.user-name:hover {
+  color: #f0f0f0;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
 }
 
 .btn-logout {

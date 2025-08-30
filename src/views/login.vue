@@ -155,7 +155,7 @@
 <script setup lang="ts">
 import {ref, computed} from 'vue'
 import {ElMessage} from 'element-plus'
-import {authAuthorize, authSendSms, authSmsLogin} from '@/api/auth'
+import {authAuthorize, authSendSms} from '@/api/auth'
 import {useShareStore} from "@/store/modules/share.ts";
 import {useUserStore} from "@/store/modules/user.ts";
 
@@ -209,6 +209,7 @@ const userStore = useUserStore()
 watch(
   () => shareStore.code,
   (newValue) => {
+    console.log(newValue)
     if (newValue) {
       userStore.accessToken({
         code: newValue,

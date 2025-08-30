@@ -9,6 +9,7 @@ export const useUserStore = defineStore(
     const account = ref(localStorage.getItem('account') ?? '')
     const token = ref(localStorage.getItem('token') ?? '')
     const avatar = ref(localStorage.getItem('avatar') ?? '')
+    const nickname = ref(localStorage.getItem('nickname') ?? '')
     const userInfo = ref(localStorage.getItem('userInfo') ? JSON.parse(<string>localStorage.getItem('userInfo')) : {})
     const permissions = ref<string[]>([])
     const isLogin = computed(() => {
@@ -80,7 +81,8 @@ export const useUserStore = defineStore(
       const res = await memberGetProfile()
       localStorage.setItem('userInfo', JSON.stringify(res.data))
       localStorage.setItem('avatar', res.data.avatar)
-      avatar.value = res.data.avatar
+      avatar.value = res.data.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + res.data.nickname
+      nickname.value = res.data.nickname
       userInfo.value = res.data
     }
 
@@ -88,6 +90,7 @@ export const useUserStore = defineStore(
       account,
       token,
       avatar,
+      nickname,
       permissions,
       userInfo,
       isLogin,
