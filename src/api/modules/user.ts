@@ -1,4 +1,4 @@
-import api from '../index'
+import api from '@/utils/axios.ts'
 
 export default {
   // 登录

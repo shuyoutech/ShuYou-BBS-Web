@@ -86,7 +86,7 @@
                   />
                 </div>
                 <div v-show="!qrCodeUrl" class="qr-placeholder">
-                  <FaIcon name="i-mdi:qrcode" class="qr-icon" />
+                  <FaIcon name="i-mdi:qrcode" class="qr-icon"/>
                   <span>点击上方按钮获取二维码</span>
                 </div>
               </div>
@@ -155,7 +155,7 @@
 <script setup lang="ts">
 import {ref, computed} from 'vue'
 import {ElMessage} from 'element-plus'
-import apiAuth from '@/api/modules/auth'
+import {authorize} from '@/api/auth'
 
 interface Props {
   visible: boolean
@@ -195,6 +195,11 @@ const aiFeatures = [
   {name: '游戏百科', icon: 'i-mdi:book-open-variant', position: 'bottom-left'},
   {name: '游戏公会', icon: 'i-mdi:account-group', position: 'bottom-right'},
 ]
+
+
+onMounted(() => {
+  getQrcode()
+});
 
 const onPhoneSubmit = async (e: Event) => {
   e.preventDefault()
@@ -287,8 +292,9 @@ const handleClose = () => {
 const getQrcode = async () => {
   loginType.value = 'wechat'
   try {
-    const response = await apiAuth.authorize({
-      socialType: '01'
+    const response = await authorize({
+      socialType: '01',
+      callBackSuffix: 'bbs/weixinLogin/callback',
     })
     const result = response as any
     if (result) {
@@ -443,18 +449,21 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
   left: 0;
   right: 0;
   bottom: 0;
-  background:
-    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.4) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.4) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 60% 60%, rgba(139, 92, 246, 0.2) 0%, transparent 50%);
+  background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.4) 0%, transparent 50%),
+  radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.4) 0%, transparent 50%),
+  radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%),
+  radial-gradient(circle at 60% 60%, rgba(139, 92, 246, 0.2) 0%, transparent 50%);
   pointer-events: none;
   animation: float 6s ease-in-out infinite;
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(180deg); }
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+  }
 }
 
 .content {
@@ -479,8 +488,12 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
 }
 
 @keyframes glow {
-  from { filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.5)); }
-  to { filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.8)); }
+  from {
+    filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.5));
+  }
+  to {
+    filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.8));
+  }
 }
 
 .subtitle {
@@ -647,30 +660,34 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
   transform: translateY(20px);
 }
 
-.feature-btn:nth-child(1) { 
-  grid-column: 1; 
-  grid-row: 1; 
-  animation-delay: 0.1s; 
+.feature-btn:nth-child(1) {
+  grid-column: 1;
+  grid-row: 1;
+  animation-delay: 0.1s;
 }
-.feature-btn:nth-child(2) { 
-  grid-column: 2; 
-  grid-row: 1; 
-  animation-delay: 0.2s; 
+
+.feature-btn:nth-child(2) {
+  grid-column: 2;
+  grid-row: 1;
+  animation-delay: 0.2s;
 }
-.feature-btn:nth-child(3) { 
-  grid-column: 3; 
-  grid-row: 1; 
-  animation-delay: 0.3s; 
+
+.feature-btn:nth-child(3) {
+  grid-column: 3;
+  grid-row: 1;
+  animation-delay: 0.3s;
 }
-.feature-btn:nth-child(4) { 
-  grid-column: 1; 
-  grid-row: 2; 
-  animation-delay: 0.4s; 
+
+.feature-btn:nth-child(4) {
+  grid-column: 1;
+  grid-row: 2;
+  animation-delay: 0.4s;
 }
-.feature-btn:nth-child(5) { 
-  grid-column: 2; 
-  grid-row: 2; 
-  animation-delay: 0.5s; 
+
+.feature-btn:nth-child(5) {
+  grid-column: 2;
+  grid-row: 2;
+  animation-delay: 0.5s;
 }
 
 @keyframes fadeInUp {
@@ -765,8 +782,12 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
 }
 
 @keyframes shine {
-  0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-  100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
 }
 
 .logo-icon {
@@ -867,9 +888,6 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
   width: 100% !important;
   height: 100% !important;
 }
-
-
-
 
 
 .qr-placeholder {

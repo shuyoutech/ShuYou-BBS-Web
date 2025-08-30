@@ -16,7 +16,7 @@ declare module 'axios' {
 
 const api = axios.create({
   baseURL: (import.meta.env.DEV && import.meta.env.VITE_OPEN_PROXY) ? '/proxy/' : import.meta.env.VITE_APP_API_BASEURL,
-  timeout: 1000 * 300,
+  timeout: 300000,
   responseType: 'json',
 })
 
@@ -25,13 +25,13 @@ api.interceptors.request.use(
     // 全局拦截请求发送前提交的参数
     const userStore = useUserStore()
     // 设置请求头
-    if (request.headers) {
-      if (userStore.isLogin) {
-        request.headers.satoken = userStore.token
-      }
+    if (request.headers && userStore.isLogin) {
+      request.headers.satoken = userStore.token
     }
     return request
-  },
+  }, (error: any) => {
+    return Promise.reject(error);
+  }
 )
 
 // 处理错误信息的函数
@@ -67,12 +67,14 @@ api.interceptors.response.use(
      */
     if (response.status !== 200) {
       if (response.data.msg !== '') {
-        handleError(response.data)
+        handleError(response.data).then(() => {
+        })
         return Promise.reject(response.data)
       }
     }
     if (response.status === 200 && response.data.code === 401) {
-      handleError(response.data)
+      handleError(response.data).then(() => {
+      })
       return Promise.reject(response.data)
     }
     if (response.headers['content-disposition']) {
