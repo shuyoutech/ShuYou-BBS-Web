@@ -189,11 +189,11 @@ const phoneForm = ref({
 })
 
 const aiFeatures = [
-  {name: '游戏指南', icon: 'i-mdi:play-circle', position: 'top'},
-  {name: '游戏捏脸', icon: 'i-mdi:presentation', position: 'top-left'},
-  {name: '游戏商城', icon: 'i-mdi:sail-boat', position: 'top-right'},
-  {name: '游戏百科', icon: 'i-mdi:account', position: 'bottom-left'},
-  {name: '游戏公会', icon: 'i-mdi:chat', position: 'bottom-right'},
+  {name: '游戏指南', icon: 'i-mdi:gamepad-variant', position: 'top'},
+  {name: '游戏捏脸', icon: 'i-mdi:face-man', position: 'top-left'},
+  {name: '游戏商城', icon: 'i-mdi:store', position: 'top-right'},
+  {name: '游戏百科', icon: 'i-mdi:book-open-variant', position: 'bottom-left'},
+  {name: '游戏公会', icon: 'i-mdi:account-group', position: 'bottom-right'},
 ]
 
 const onPhoneSubmit = async (e: Event) => {
@@ -431,8 +431,8 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
   position: relative;
   background: linear-gradient(135deg, #1a1a3a 0%, #2d1b69 50%, #4c1d95 100%);
   position: relative;
-  overflow: hidden;
-  padding: 2rem 0 4rem 0;
+  overflow: visible;
+  padding: 2rem 0 5rem 0;
   border-radius: 16px 0 0 16px;
 }
 
@@ -596,25 +596,35 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
 
 /* AI功能按钮 */
 .ai-features {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 0.8rem;
+  width: 320px;
   margin: auto;
+  padding: 1rem;
+  max-height: 200px;
+  overflow: visible;
 }
 
 .feature-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  gap: 0.3rem;
+  padding: 0.5rem 0.6rem;
   background: rgba(139, 92, 246, 0.15);
   border: 1px solid rgba(139, 92, 246, 0.4);
-  border-radius: 24px;
+  border-radius: 16px;
   color: white;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(15px);
   box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
+  min-height: 80px;
+  justify-content: center;
 }
 
 .feature-btn:hover {
@@ -628,6 +638,46 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
   font-size: 1.2rem;
   color: #a855f7;
   filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.6));
+}
+
+/* 网格定位 - 3+2布局 */
+.feature-btn {
+  animation: fadeInUp 0.6s ease-out forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.feature-btn:nth-child(1) { 
+  grid-column: 1; 
+  grid-row: 1; 
+  animation-delay: 0.1s; 
+}
+.feature-btn:nth-child(2) { 
+  grid-column: 2; 
+  grid-row: 1; 
+  animation-delay: 0.2s; 
+}
+.feature-btn:nth-child(3) { 
+  grid-column: 3; 
+  grid-row: 1; 
+  animation-delay: 0.3s; 
+}
+.feature-btn:nth-child(4) { 
+  grid-column: 1; 
+  grid-row: 2; 
+  animation-delay: 0.4s; 
+}
+.feature-btn:nth-child(5) { 
+  grid-column: 2; 
+  grid-row: 2; 
+  animation-delay: 0.5s; 
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* 右侧登录面板 */
@@ -1066,7 +1116,9 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
 
   .ai-features {
     width: 280px;
-    height: 280px;
+    gap: 0.6rem;
+    padding: 0.8rem;
+    max-height: 180px;
   }
 
   .feature-btn {
@@ -1092,7 +1144,9 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
 
   .ai-features {
     width: 250px;
-    height: 250px;
+    gap: 0.5rem;
+    padding: 0.6rem;
+    max-height: 160px;
   }
 
   .feature-btn {
