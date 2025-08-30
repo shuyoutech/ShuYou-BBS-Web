@@ -5,7 +5,7 @@
       <div class="header-content">
         <div class="logo">
           <img src="@/assets/images/logo.svg" alt="BBS Logo" class="logo-img" />
-          <span class="logo-text">书友论坛</span>
+          <span class="logo-text">数游论坛</span>
         </div>
         <div class="nav-menu">
           <a href="#" class="nav-item active">首页</a>
@@ -17,11 +17,8 @@
         </div>
         <div class="user-section">
           <div v-if="!isLoggedIn" class="login-buttons">
-            <button class="btn btn-primary" @click="showLoginModal = true">
+            <button class="btn btn-primary" @click="goToLogin">
               登录
-            </button>
-            <button class="btn btn-secondary" @click="showRegisterModal = true">
-              注册
             </button>
           </div>
           <div v-else class="user-info">
@@ -154,19 +151,12 @@
       </div>
     </div>
 
-    <!-- 登录模态框 -->
-    <BbsLoginModal
-      v-model:visible="showLoginModal"
+    <!-- AI登录模态框 -->
+    <Login
+      v-model:visible="showAiLoginModal"
       @login-success="handleLoginSuccess"
-      @show-register="showRegisterModal = true"
     />
 
-    <!-- 注册模态框 -->
-    <BbsRegisterModal
-      v-model:visible="showRegisterModal"
-      @register-success="handleRegisterSuccess"
-      @show-login="showLoginModal = true"
-    />
   </div>
 </template>
 
@@ -174,22 +164,24 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import BbsLoginModal from '@/views/bbs/components/BbsLoginModal.vue'
-import BbsRegisterModal from '@/views/bbs/components/BbsRegisterModal.vue'
+import Login from '@/views/login.vue'
 
 const router = useRouter()
 
 // 响应式数据
-const showLoginModal = ref(false)
-const showRegisterModal = ref(false)
 const currentFilter = ref('all')
 const currentPage = ref(1)
 const pageSize = ref(10)
 
-// 模拟数据
-const isLoggedIn = ref(false)
-const userInfo = ref<any>(null)
-const posts = ref<any[]>([])
+// 用户状态
+const isLoggedIn = computed(() => {
+  return !!localStorage.getItem('token')
+})
+
+const userInfo = computed(() => {
+  const stored = localStorage.getItem('userInfo')
+  return stored ? JSON.parse(stored) : null
+})
 const totalPosts = ref(0)
 const hotPosts = ref<any[]>([])
 const activeUsers = ref<any[]>([])
@@ -292,24 +284,29 @@ const viewPost = (postId: string) => {
   router.push(`/bbs/post/${postId}`)
 }
 
-const handleLoginSuccess = (userData: any) => {
-  showLoginModal.value = false
-  ElMessage.success('登录成功！')
-  isLoggedIn.value = true
-  userInfo.value = userData
-}
 
-const handleRegisterSuccess = (userData: any) => {
-  showRegisterModal.value = false
-  ElMessage.success('注册成功！')
-  isLoggedIn.value = true
-  userInfo.value = userData
-}
 
 const logout = () => {
-  isLoggedIn.value = false
-  userInfo.value = null
+  // 清除本地存储
+  localStorage.removeItem('token')
+  localStorage.removeItem('userInfo')
+  localStorage.removeItem('avatar')
+
   ElMessage.success('已退出登录')
+  // 刷新页面以更新UI
+  window.location.reload()
+}
+
+const showAiLoginModal = ref(false)
+
+const goToLogin = () => {
+  showAiLoginModal.value = true
+}
+
+const handleLoginSuccess = (userData: any) => {
+  showAiLoginModal.value = false
+  ElMessage.success('登录成功！')
+  console.log('登录成功，用户信息:', userData)
 }
 
 const handleSizeChange = (size: number) => {
@@ -353,7 +350,7 @@ onMounted(() => {
 }
 
 .header-content {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -363,6 +360,7 @@ onMounted(() => {
 }
 
 .logo {
+  margin-left: 100px;
   display: flex;
   align-items: center;
   gap: 10px;
