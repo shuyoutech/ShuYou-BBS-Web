@@ -68,9 +68,11 @@ export const useUserStore = defineStore(
     // 登出后清除状态
     function logoutCleanStatus() {
       localStorage.removeItem('account')
-      localStorage.removeItem('avatar')
       localStorage.removeItem('token')
       localStorage.removeItem('userId')
+      localStorage.removeItem('userInfo')
+      localStorage.removeItem('nickname')
+      localStorage.removeItem('avatar')
       account.value = ''
       avatar.value = ''
       permissions.value = []
@@ -79,11 +81,12 @@ export const useUserStore = defineStore(
     // 获取用户信息
     async function getUserInfo() {
       const res = await memberGetProfile()
-      localStorage.setItem('userInfo', JSON.stringify(res.data))
-      localStorage.setItem('avatar', res.data.avatar)
       avatar.value = res.data.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + res.data.nickname
       nickname.value = res.data.nickname
       userInfo.value = res.data
+      localStorage.setItem('userInfo', JSON.stringify(res.data))
+      localStorage.setItem('avatar', avatar.value)
+      localStorage.setItem('nickname', nickname.value)
     }
 
     return {

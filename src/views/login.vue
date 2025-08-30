@@ -191,13 +191,12 @@ const phoneForm = ref({
 })
 
 const aiFeatures = [
-  {name: '游戏指南', icon: 'i-mdi:gamepad-variant', position: 'top'},
+  {name: '游戏攻略', icon: 'i-mdi:gamepad-variant', position: 'top'},
+  {name: '游戏论坛', icon: 'i-mdi:book-open-variant', position: 'bottom-left'},
   {name: '游戏捏脸', icon: 'i-mdi:face-man', position: 'top-left'},
   {name: '游戏商城', icon: 'i-mdi:store', position: 'top-right'},
-  {name: '游戏百科', icon: 'i-mdi:book-open-variant', position: 'bottom-left'},
   {name: '游戏公会', icon: 'i-mdi:account-group', position: 'bottom-right'},
 ]
-
 
 onMounted(() => {
   getQrCode()
@@ -275,8 +274,10 @@ const getQrCode = async () => {
 <style>
 /* 全局样式强制覆盖对话框高度 - 使用更高优先级 */
 html body .el-dialog.ai-login-modal {
-  height: 60vh !important;
-  max-height: 60vh !important;
+  height: 600px !important;
+  max-height: 600px !important;
+  width: 1000px !important;
+  max-width: 1000px !important;
   border-radius: 16px !important;
   box-shadow: none !important;
   border: none !important;
@@ -296,8 +297,8 @@ html body .el-dialog.ai-login-modal {
 }
 
 html body .el-dialog.ai-login-modal .el-dialog__body {
-  height: 60vh !important;
-  max-height: 60vh !important;
+  height: 600px !important;
+  max-height: 600px !important;
   background: transparent !important;
   overflow: hidden !important;
   border-radius: 16px !important;
@@ -312,10 +313,12 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
 }
 
 /* 强制覆盖移动端样式 */
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
   html body .el-dialog.ai-login-modal {
-    height: 60vh !important;
-    max-height: 60vh !important;
+    height: 500px !important;
+    max-height: 500px !important;
+    width: 90vw !important;
+    max-width: 90vw !important;
     border-radius: 16px !important;
     box-shadow: none !important;
     border: none !important;
@@ -324,6 +327,8 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
   }
 
   html body .el-dialog.ai-login-modal .el-dialog__body {
+    height: 500px !important;
+    max-height: 500px !important;
     background: transparent !important;
     overflow: hidden !important;
     border-radius: 16px !important;
@@ -333,14 +338,28 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
     background: transparent !important;
   }
 }
+
+@media (max-width: 768px) {
+  html body .el-dialog.ai-login-modal {
+    height: 80vh !important;
+    max-height: 80vh !important;
+    width: 95vw !important;
+    max-width: 95vw !important;
+  }
+
+  html body .el-dialog.ai-login-modal .el-dialog__body {
+    height: 80vh !important;
+    max-height: 80vh !important;
+  }
+}
 </style>
 
 <style scoped>
 .ai-login-modal :deep(.el-dialog) {
   margin: 20vh auto !important;
-  height: 60vh !important;
+  height: 600px !important;
   max-width: 1000px !important;
-  width: 80% !important;
+  width: 1000px !important;
   border-radius: 16px !important;
   overflow: hidden !important;
   box-shadow: none !important;
@@ -358,15 +377,17 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
 
 .ai-login-modal :deep(.el-dialog__body) {
   padding: 0;
-  height: 60vh;
+  height: 600px;
   overflow: hidden;
   border-radius: 16px;
 }
 
 /* 强制覆盖对话框高度 */
 .ai-login-modal :deep(.el-dialog) {
-  height: 60vh !important;
-  max-height: 60vh !important;
+  height: 600px !important;
+  max-height: 600px !important;
+  width: 1000px !important;
+  max-width: 1000px !important;
   border-radius: 16px !important;
   box-shadow: none !important;
   border: none !important;
@@ -374,8 +395,8 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
 }
 
 .ai-login-modal :deep(.el-dialog__body) {
-  height: 60vh !important;
-  max-height: 60vh !important;
+  height: 600px !important;
+  max-height: 600px !important;
   overflow: hidden !important;
   border-radius: 16px !important;
 }
@@ -1057,11 +1078,23 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
   text-decoration: underline;
 }
 
+@media (max-width: 1200px) {
+  .ai-login-modal :deep(.el-dialog) {
+    width: 90vw !important;
+    height: 500px !important;
+    margin: 20vh auto !important;
+    border-radius: 16px !important;
+    box-shadow: none !important;
+    border: none !important;
+    overflow: hidden !important;
+  }
+}
+
 @media (max-width: 768px) {
   .ai-login-modal :deep(.el-dialog) {
-    width: 95% !important;
-    height: 60vh !important;
-    margin: 20vh auto !important;
+    width: 95vw !important;
+    height: 80vh !important;
+    margin: 10vh auto !important;
     border-radius: 16px !important;
     box-shadow: none !important;
     border: none !important;

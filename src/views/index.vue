@@ -9,21 +9,21 @@
         </div>
         <div class="nav-menu">
           <a href="#" class="nav-item active">首页</a>
-          <a href="#" class="nav-item">动态</a>
-          <a href="#" class="nav-item">圈子</a>
           <a href="#" class="nav-item">攻略</a>
-          <a href="#" class="nav-item">资料</a>
-          <a href="#" class="nav-item">视频</a>
+          <a href="#" class="nav-item">论坛</a>
+          <a href="#" class="nav-item">捏脸</a>
+          <a href="#" class="nav-item">商城</a>
+          <a href="#" class="nav-item">公会</a>
         </div>
         <div class="user-section">
-          <div v-if="!isLoggedIn" class="login-buttons">
+          <div v-if="!isLogin" class="login-buttons">
             <button class="btn btn-primary" @click="goToLogin">
               登录
             </button>
           </div>
           <div v-else class="user-info">
-            <img :src="userInfo?.avatar" :alt="userInfo?.nickname" class="user-avatar" @click="goToProfile"/>
-            <span class="user-name" @click="goToProfile">{{ userInfo?.nickname }}</span>
+            <img :src="avatar" :alt="nickname" class="user-avatar" @click="goToProfile"/>
+            <span class="user-name" @click="goToProfile">{{ nickname }}</span>
           </div>
         </div>
       </div>
@@ -140,9 +140,8 @@
                 :key="user.id"
                 class="active-user-item"
               >
-                <img :src="user.avatar" :alt="user.nickname" class="user-avatar-small"/>
+                <img :src="avatar" :alt="user.nickname" class="user-avatar-small"/>
                 <span class="user-name-small">{{ user.nickname }}</span>
-                <span class="user-level">{{ user.level }}</span>
               </div>
             </div>
           </div>
@@ -178,15 +177,16 @@ const currentFilter = ref('all')
 const currentPage = ref(1)
 const pageSize = ref(10)
 
-// 用户状态
-const isLoggedIn = computed(() => {
+const isLogin = computed(() => {
   return !!localStorage.getItem('token')
 })
-
-const userInfo = computed(() => {
-  const stored = localStorage.getItem('userInfo')
-  return stored ? JSON.parse(stored) : null
+const avatar = computed(() => {
+  return localStorage.getItem('avatar')
 })
+const nickname = computed(() => {
+  return localStorage.getItem('nickname')
+})
+
 const totalPosts = ref(0)
 const hotPosts = ref<any[]>([])
 const activeUsers = ref<any[]>([])
@@ -337,10 +337,11 @@ onMounted(() => {
 }
 
 .bbs-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: white;
+  color: #333;
   padding: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .header-content {
@@ -376,7 +377,7 @@ onMounted(() => {
 }
 
 .nav-item {
-  color: white;
+  color: #333;
   text-decoration: none;
   padding: 8px 16px;
   border-radius: 4px;
@@ -385,7 +386,8 @@ onMounted(() => {
 
 .nav-item:hover,
 .nav-item.active {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(0, 0, 0, 0.1);
+  color: #000;
 }
 
 .user-section {
@@ -444,26 +446,34 @@ onMounted(() => {
 
 .user-avatar:hover {
   transform: scale(1.1);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
 .user-name {
   font-size: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
+  color: #333;
 }
 
 .user-name:hover {
-  color: #f0f0f0;
-  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+  color: #000;
+  text-shadow: none;
 }
 
 .btn-logout {
   background-color: transparent;
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: #666;
+  border: 1px solid rgba(0, 0, 0, 0.2);
   padding: 4px 8px;
   font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.btn-logout:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #333;
+  border-color: rgba(0, 0, 0, 0.3);
 }
 
 .bbs-main {
