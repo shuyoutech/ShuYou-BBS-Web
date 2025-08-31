@@ -22,6 +22,7 @@ export default defineConfig(({ mode, command }) => {
       open: true,
       host: true,
       port: 9000,
+      allowedHosts: true,
       proxy: {
         '/proxy': {
           target: env.VITE_APP_API_BASEURL,

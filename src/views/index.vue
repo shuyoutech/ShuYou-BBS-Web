@@ -303,7 +303,7 @@ const handleLoginSuccess = (userData: any) => {
   avatar.value = localStorage.getItem('avatar') || ''
   nickname.value = userData.nickname
   isLogin.value = true
-  
+
   // 登录成功后刷新页面数据或跳转到其他页面
   // 这里可以根据需要跳转到用户中心或其他页面
   // router.push('/profile') // 如果需要跳转到个人中心
@@ -328,6 +328,20 @@ onMounted(() => {
     {id: '3', nickname: '活跃用户3', avatar: 'https://picsum.photos/32/32?random=12', level: '新手'},
   ]
   totalPosts.value = mockPosts.value.length
+
+  const shareStore = useShareStore()
+  if (shareStore.code) {
+    userStore.accessToken({
+      code: shareStore.code,
+    }).then(() => {
+      isLogin.value = userStore.isLogin
+      avatar.value = userStore.avatar
+      nickname.value = userStore.nickname
+    }).catch((error) => {
+      console.error('微信登录失败:', error)
+      ElMessage.error('微信登录失败，请重试')
+    })
+  }
 })
 
 watch(

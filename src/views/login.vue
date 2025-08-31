@@ -214,6 +214,7 @@ const userStore = useUserStore()
 watch(
   () => shareStore.code,
   (newValue) => {
+    alert("code:" + newValue)
     console.log("accessToken =========== code:", newValue)
     if (newValue) {
       userStore.accessToken({
@@ -268,7 +269,7 @@ const getQrCode = async () => {
   try {
     const response = await authAuthorize({
       socialType: '01',
-      callBackSuffix: 'bbs/wechat/callback',
+      callBackSuffix: 'local/wechat/callback',
     })
     if (response.data) {
       qrCodeUrl.value = response.data
