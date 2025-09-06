@@ -9,9 +9,6 @@
         </div>
         <div class="header-actions">
           <button class="btn btn-secondary" @click="goBack">返回</button>
-          <button class="btn btn-primary" @click="publishPost" :disabled="!canPublish">
-            {{ isPublishing ? '发布中...' : '发布' }}
-          </button>
         </div>
       </div>
     </div>
@@ -39,57 +36,11 @@
         <!-- 内容编辑器 -->
         <div class="form-section">
           <label class="form-label">内容</label>
-          <div class="editor-container">
-            <!-- 富文本编辑器工具栏 -->
-            <div class="editor-toolbar">
-              <button class="toolbar-btn" @click="formatText('bold')" :class="{ active: formats.bold }">
-                <FaIcon name="i-mdi:format-bold"/>
-              </button>
-              <div class="font-size-selector">
-                <select v-model="formats.fontSize" class="font-size-select">
-                  <option value="12px">12px</option>
-                  <option value="14px">14px</option>
-                  <option value="16px">16px</option>
-                  <option value="18px">18px</option>
-                  <option value="20px">20px</option>
-                </select>
-              </div>
-              <button class="toolbar-btn" @click="formatText('alignLeft')" :class="{ active: formats.alignLeft }">
-                <FaIcon name="i-mdi:format-align-left"/>
-              </button>
-              <button class="toolbar-btn" @click="formatText('alignCenter')" :class="{ active: formats.alignCenter }">
-                <FaIcon name="i-mdi:format-align-center"/>
-              </button>
-              <button class="toolbar-btn" @click="formatText('alignRight')" :class="{ active: formats.alignRight }">
-                <FaIcon name="i-mdi:format-align-right"/>
-              </button>
-              <button class="toolbar-btn" @click="formatText('justify')" :class="{ active: formats.justify }">
-                <FaIcon name="i-mdi:format-align-justify"/>
-              </button>
-              <button class="toolbar-btn" @click="formatText('orderedList')">
-                <FaIcon name="i-mdi:format-list-numbered"/>
-              </button>
-              <button class="toolbar-btn" @click="formatText('bulletList')">
-                <FaIcon name="i-mdi:format-list-bulleted"/>
-              </button>
-              <button class="toolbar-btn" @click="insertImage">
-                <FaIcon name="i-mdi:image"/>
-              </button>
-              <button class="toolbar-btn" @click="insertLink">
-                <FaIcon name="i-mdi:link"/>
-              </button>
+          <FaPageMain>
+            <div class="min-w-full prose">
+              <TinymceEditor v-model="content" :init="defaultSetting" />
             </div>
-            <!-- 编辑器内容区域 -->
-            <div
-              ref="editorContent"
-              class="editor-content"
-              contenteditable="true"
-              @input="handleContentInput"
-              @paste="handlePaste"
-              data-placeholder="正文输入最少11个字哦"
-            ></div>
-          </div>
-          <div v-if="contentError" class="error-message">{{ contentError }}</div>
+          </FaPageMain>
         </div>
 
         <!-- 板块选择 -->
@@ -175,11 +126,56 @@
 </template>
 
 <script setup lang="ts">
+import TinymceEditor from '@tinymce/tinymce-vue'
+import 'tinymce/themes/silver/theme'
+import 'tinymce/icons/default/icons'
+import 'tinymce/models/dom'
+import 'tinymce/plugins/autolink'
+import 'tinymce/plugins/autoresize'
+import 'tinymce/plugins/fullscreen'
+import 'tinymce/plugins/image'
+import 'tinymce/plugins/insertdatetime'
+import 'tinymce/plugins/link'
+import 'tinymce/plugins/lists'
+import 'tinymce/plugins/media'
+import 'tinymce/plugins/preview'
+import 'tinymce/plugins/table'
+import 'tinymce/plugins/wordcount'
+import 'tinymce/plugins/code'
+import 'tinymce/plugins/searchreplace'
+
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
+
+
+const defaultSetting = ref({
+  language_url: 'tinymce/langs/zh-Hans.js',
+  language: 'zh-Hans',
+  skin_url: 'tinymce/skins/ui/oxide-dark',
+  content_css: 'tinymce/skins/content/dark/content.min.css',
+  min_height: 250,
+  max_height: 600,
+  selector: 'textarea',
+  plugins: 'autolink autoresize fullscreen image insertdatetime link lists media preview table wordcount code searchreplace',
+  toolbar: 'undo redo | blocks | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | forecolor backcolor removeformat | link image media table insertdatetime searchreplace | preview code fullscreen',
+  branding: false,
+  menubar: false,
+  toolbar_mode: 'sliding',
+  insertdatetime_formats: [
+    '%Y年%m月%d日',
+    '%H点%M分%S秒',
+    '%Y-%m-%d',
+    '%H:%M:%S',
+  ],
+  // https://www.tiny.cloud/docs/tinymce/6/file-image-upload/#images_upload_handler
+  images_upload_handler: (blobInfo: any) => new Promise((resolve) => {
+    const img = `data:image/jpeg;base64,${blobInfo.base64()}`
+    resolve(img)
+  }),
+})
 
 // 表单数据
 const formData = ref({
@@ -385,6 +381,10 @@ const publishPost = async () => {
 const goBack = () => {
   router.back()
 }
+
+
+const content = ref('')
+
 
 onMounted(() => {
   // 设置默认板块

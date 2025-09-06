@@ -5,7 +5,7 @@ import type {AxiosResponse} from "axios"
 /**
  * 数据字典下拉框
  */
-export function dictOptionsApi(dictCode: string): Promise<AxiosResponse<DropDownOptions[]>> {
+export function dictOptionsApi(dictCode: string): Promise<AxiosResponse<Options[]>> {
   return api({
     url: '/common/dict/options/' + dictCode,
     method: 'post',

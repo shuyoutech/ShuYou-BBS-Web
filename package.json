@@ -28,6 +28,7 @@
   "dependencies": {
     "@microsoft/fetch-event-source": "^2.0.1",
     "@number-flow/vue": "^0.4.8",
+    "@tinymce/tinymce-vue": "^6.3.0",
     "@vee-validate/zod": "^4.15.1",
     "@vueuse/components": "^13.8.0",
     "@vueuse/core": "^13.8.0",
@@ -66,6 +67,7 @@
     "sortablejs": "^1.15.6",
     "spinkit": "^2.0.1",
     "tailwind-merge": "^3.3.1",
+    "tinymce": "^8.0.2",
     "ua-parser-js": "^2.0.4",
     "v-wave": "^3.0.3",
     "vconsole": "^3.15.1",

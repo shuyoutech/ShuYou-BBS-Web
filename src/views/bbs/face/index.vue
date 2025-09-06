@@ -9,13 +9,13 @@
             <span class="game-label">热门游戏</span>
             <div class="game-buttons">
               <button
-                v-for="game in gameOptions"
+                v-for="game in gameList"
                 :key="game.id"
                 :class="['game-btn', { active: selectedGames.includes(game.id) }]"
                 @click="toggleGame(game.id)"
               >
-                <img :src="game.icon" :alt="game.name" class="game-btn-icon"/>
-                <span class="game-btn-text">{{ game.name }}</span>
+                <img :src="game.gameIcon" :alt="game.gameName" class="game-btn-icon"/>
+                <span class="game-btn-text">{{ game.gameName }}</span>
               </button>
             </div>
           </div>
@@ -23,14 +23,15 @@
 
         <!-- 第二排：分类筛选标签 -->
         <div class="category-selector">
-          <div class="filter-tabs">
+          <span class="category-label">标签&nbsp;&nbsp;&nbsp;&nbsp;</span>
+          <div class="tag-buttons">
             <button
-              v-for="tab in filterTabs"
-              :key="tab.key"
-              :class="['filter-tab', { active: currentFilter === tab.key }]"
-              @click="currentFilter = tab.key"
+              v-for="type in typeList"
+              :key="type.value"
+              :class="['tag-btn', { active: selectedTypes.includes(type.value) }]"
+              @click="toggleType(type.value)"
             >
-              {{ tab.label }}
+              <span class="tag-btn-text">{{ type.label }}</span>
             </button>
           </div>
         </div>
@@ -264,6 +265,9 @@
 import {ref, computed, onMounted} from 'vue'
 import {useRouter} from 'vue-router'
 import {ElMessage} from 'element-plus'
+import {gameHotListApi} from "@/api/game";
+import type {GameVo} from "@/api/game/types.ts";
+import {dictOptionsApi} from "@/api/common";
 
 const router = useRouter()
 
@@ -281,58 +285,8 @@ const totalWorks = ref(0)
 
 // 游戏选择相关
 const selectedGames = ref<string[]>([])
-const gameOptions = ref([
-  {
-    id: 'lost-ark',
-    name: '命运方舟',
-    icon: 'https://picsum.photos/24/24?random=100'
-  },
-  {
-    id: 'genshin',
-    name: '原神',
-    icon: 'https://picsum.photos/24/24?random=101'
-  },
-  {
-    id: 'honkai',
-    name: '崩坏：星穹铁道',
-    icon: 'https://picsum.photos/24/24?random=102'
-  },
-  {
-    id: 'wow',
-    name: '魔兽世界',
-    icon: 'https://picsum.photos/24/24?random=103'
-  },
-  {
-    id: 'ffxiv',
-    name: '最终幻想XIV',
-    icon: 'https://picsum.photos/24/24?random=104'
-  },
-  {
-    id: 'black-desert',
-    name: '黑色沙漠',
-    icon: 'https://picsum.photos/24/24?random=105'
-  },
-  {
-    id: 'bdo',
-    name: '剑灵',
-    icon: 'https://picsum.photos/24/24?random=106'
-  },
-  {
-    id: 'tera',
-    name: 'TERA',
-    icon: 'https://picsum.photos/24/24?random=107'
-  }
-])
-
-// 筛选标签
-const filterTabs = [
-  {key: 'all', label: '全部'},
-  {key: 'female', label: '女性角色'},
-  {key: 'male', label: '男性角色'},
-  {key: 'fantasy', label: '奇幻风格'},
-  {key: 'realistic', label: '写实风格'},
-  {key: 'anime', label: '动漫风格'}
-]
+// 标签选择相关
+const selectedTypes = ref<string[]>([])
 
 // 模拟作品数据
 const works = ref([
@@ -777,9 +731,35 @@ const toggleGame = (gameId: string) => {
   }
 }
 
+// 标签选择相关方法
+const toggleType = (value: string) => {
+  const index = selectedTypes.value.indexOf(value)
+  if (index > -1) {
+    selectedTypes.value.splice(index, 1)
+  } else {
+    selectedTypes.value.push(value)
+  }
+}
+
+// 加载游戏
+const gameList = ref<GameVo[]>();
+const loadGames = () => {
+  gameHotListApi().then(({data}) => {
+    gameList.value = data;
+  });
+}
+
+// 加载游戏标签
+const typeList = ref<Options[]>();
+const loadFaceTypes = () => {
+  dictOptionsApi("bbs_face_type").then(({data}) => {
+    typeList.value = data;
+  })
+}
+
 onMounted(() => {
-  // 初始化数据
-  // 这里可以检查用户登录状态
+  loadGames();
+  loadFaceTypes();
 })
 </script>
 
@@ -792,12 +772,13 @@ onMounted(() => {
 .header-actions {
   display: flex;
   gap: 12px;
+  align-items: center;
 }
 
 .filter-section {
   background: white;
   border-bottom: 1px solid #e4e7ed;
-  padding: 20px 0;
+  padding: 10px 0;
 }
 
 .filter-content {
@@ -806,7 +787,7 @@ onMounted(() => {
   padding: 0 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .search-filter-row {
@@ -814,62 +795,114 @@ onMounted(() => {
   align-items: center;
   gap: 20px;
   flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 12px;
 }
 
 .search-box {
   position: relative;
-  flex: 0.5;
-  min-width: 200px;
+  flex: 1;
+  min-width: 400px;
+  max-width: 800px;
 }
 
 .search-icon {
   position: absolute;
-  left: 12px;
+  left: 16px;
   top: 50%;
   transform: translateY(-50%);
   color: #909399;
-  font-size: 18px;
+  font-size: 20px;
 }
 
 .search-input {
   width: 100%;
-  padding: 12px 16px 12px 40px;
+  padding: 16px 20px 16px 50px;
   border: 2px solid #e4e7ed;
-  border-radius: 8px;
+  border-radius: 25px;
   font-size: 16px;
   transition: all 0.3s ease;
-  background: #fafafa;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .search-input:focus {
   outline: none;
   border-color: #409eff;
   background: white;
-  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
+  transform: translateY(-2px);
 }
 
 .filter-tabs {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 12px;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  overflow-x: auto;
 }
 
 .filter-tab {
-  padding: 8px 16px;
-  border: 1px solid #dcdfe6;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: 2px solid #e4e7ed;
   background: white;
-  border-radius: 20px;
+  border-radius: 25px;
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 14px;
   color: #606266;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 120px;
 }
 
-.filter-tab.active,
 .filter-tab:hover {
+  background: #f8f9fa;
+  border-color: #c0c4cc;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.filter-tab.active {
   background: #409eff;
   color: white;
   border-color: #409eff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+}
+
+/* 全部按钮的标签样式 */
+.filter-tab.tag-like {
+  background: #f0f9ff;
+  color: #409eff;
+  border: 1px solid #b3d8ff;
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  min-width: 50px;
+  box-shadow: none;
+  transform: none;
+}
+
+.filter-tab.tag-like:hover {
+  background: #e1f5fe;
+  border-color: #81d4fa;
+  transform: none;
+  box-shadow: 0 2px 4px rgba(64, 158, 255, 0.2);
+}
+
+.filter-tab.tag-like.active {
+  background: #409eff;
+  color: white;
+  border-color: #409eff;
+  transform: none;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
 }
 
 
@@ -877,93 +910,176 @@ onMounted(() => {
 .game-selector {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 12px;
 }
 
 .game-section {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+  width: 100%;
+  justify-content: flex-start;
 }
 
 .game-label {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: #333;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .game-buttons {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 12px;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  padding: 8px 0;
+  overflow-x: auto;
 }
 
 .game-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: 1px solid #dcdfe6;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 2px solid #e4e7ed;
   background: white;
-  border-radius: 20px;
+  border-radius: 25px;
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 14px;
   color: #606266;
   white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 120px;
+  width: 100%;
 }
 
 .game-btn:hover {
-  background: #f5f7fa;
+  background: #f8f9fa;
   border-color: #c0c4cc;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .game-btn.active {
   background: #409eff;
   color: white;
   border-color: #409eff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
 }
 
 .game-btn-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
 .game-btn-text {
   font-size: 14px;
   font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  text-align: center;
 }
 
 /* 分类选择器样式 */
 .category-selector {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 12px;
+}
+
+/* 标签按钮容器样式 */
+.tag-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  padding: 8px 0;
+  overflow-x: auto;
+}
+
+/* 标签按钮样式 */
+.tag-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid #e4e7ed;
+  background: #f8f9fa;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 13px;
+  color: #606266;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 80px;
+}
+
+.tag-btn:hover {
+  background: #e9ecef;
+  border-color: #c0c4cc;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.tag-btn.active {
+  background: #409eff;
+  color: white;
+  border-color: #409eff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+}
+
+.tag-btn-text {
+  font-size: 13px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  text-align: center;
 }
 
 /* 排序按钮样式 */
 .sort-buttons {
   display: flex;
   align-items: center;
-  border: 1px solid #dcdfe6;
-  border-radius: 6px;
+  border: 2px solid #e4e7ed;
+  border-radius: 25px;
   overflow: hidden;
   background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .sort-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
+  gap: 8px;
+  padding: 12px 20px;
   border: none;
   background: white;
   color: #909399;
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 14px;
-  border-right: 1px solid #dcdfe6;
+  font-weight: 500;
+  border-right: 1px solid #e4e7ed;
+  min-width: 80px;
+  justify-content: center;
 }
 
 .sort-btn:last-child {
@@ -971,17 +1087,19 @@ onMounted(() => {
 }
 
 .sort-btn:hover {
-  background: #f5f7fa;
+  background: #f8f9fa;
   color: #606266;
+  transform: translateY(-1px);
 }
 
 .sort-btn.active {
-  background: #f0f9ff;
-  color: #409eff;
+  background: #409eff;
+  color: white;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
 }
 
 .sort-icon {
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .main-content {
@@ -1606,11 +1724,18 @@ onMounted(() => {
   background: linear-gradient(135deg, #409eff, #337ecc);
   color: white;
   box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+  border-radius: 25px;
+  padding: 14px 28px;
+  font-weight: 600;
+  font-size: 16px;
+  min-width: 140px;
+  justify-content: center;
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(64, 158, 255, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(64, 158, 255, 0.5);
+  background: linear-gradient(135deg, #337ecc, #2c6bb3);
 }
 
 .btn-secondary {

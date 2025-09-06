@@ -50,7 +50,7 @@ declare global {
   /**
    * 下拉选项对象
    */
-  interface DropDownOptions {
+  interface Options {
     value: string; //显示值
     label: string; //显示文本
     sort: number;  //排序号
@@ -72,14 +72,6 @@ declare global {
     visible: boolean;
   }
 
-  /**
-   * 下拉框列表对象
-   */
-  interface OptionVo {
-    value: string;
-    label: string;
-    children?: OptionVo[];
-  }
 }
 
 export {};
