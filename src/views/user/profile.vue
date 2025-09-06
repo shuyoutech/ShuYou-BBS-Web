@@ -15,6 +15,15 @@
 
     <!-- 账户绑定选项 -->
     <div class="binding-section">
+      <!-- 个人中心选项 -->
+      <div class="binding-item" @click="handlePersonalCenter">
+        <div class="binding-left">
+          <FaIcon name="i-mdi:account" class="binding-icon"/>
+          <span>个人中心</span>
+        </div>
+        <FaIcon name="i-mdi:chevron-right" class="arrow-icon"/>
+      </div>
+
       <div class="binding-item" @click="handlePhoneBinding">
         <div class="binding-left">
           <FaIcon name="i-mdi:phone" class="binding-icon"/>
@@ -32,7 +41,6 @@
       </div>
     </div>
 
-
     <!-- 退出登录按钮 -->
     <div class="logout-section">
       <button class="logout-btn" @click="handleLogout">
@@ -43,8 +51,8 @@
 </template>
 
 <script setup lang="ts">
-import {useUserStore} from '@/store/modules/user'
-import {ElMessage} from 'element-plus'
+import { useUserStore } from '@/store/modules/user.ts'
+import { ElMessage } from 'element-plus'
 
 interface Props {
   visible: boolean
@@ -52,13 +60,13 @@ interface Props {
 
 interface Emits {
   (e: 'update:visible', value: boolean): void
+  (e: 'open-personal-center'): void
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const userStore = useUserStore()
-
 
 // 默认头像
 const defaultAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=DM'
@@ -75,16 +83,21 @@ const getUserNickname = () => {
   return nickname || 'DM'
 }
 
-
 // 处理手机绑定
 const handlePhoneBinding = () => {
   ElMessage.info('手机绑定功能开发中...')
 }
 
+// 处理个人中心
+const handlePersonalCenter = () => {
+  emit('open-personal-center')
+  emit('update:visible', false)
+}
+
+// 处理退出登录
 const handleLogout = () => {
   userStore.logout()
   ElMessage.success('已退出登录')
-  // 更新用户状态
   emit('update:visible', false)
 }
 
@@ -211,7 +224,6 @@ const handleLogout = () => {
   text-shadow: none;
 }
 
-
 /* 账户绑定选项 */
 .binding-section {
   margin-bottom: 20px;
@@ -267,7 +279,6 @@ const handleLogout = () => {
   font-size: 12px;
   font-weight: 600;
 }
-
 
 /* 退出登录按钮 */
 .logout-section {

@@ -9,6 +9,8 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AccountButton: typeof import('./../components/AccountButton/index.vue')['default']
+    AppFooter: typeof import('./../components/AppFooter/index.vue')['default']
+    AppHeader: typeof import('./../components/AppHeader/index.vue')['default']
     FaAnimatedBeam: typeof import('./../ui/components/FaAnimatedBeam/index.vue')['default']
     FaAnimatedCountTo: typeof import('./../ui/components/FaAnimatedCountTo/index.vue')['default']
     FaAnimatedCountToGroup: typeof import('./../ui/components/FaAnimatedCountToGroup/index.vue')['default']
@@ -88,6 +90,7 @@ declare module 'vue' {
     ImageUpload: typeof import('./../components/ImageUpload/index.vue')['default']
     PcasCascader: typeof import('./../components/PcasCascader/index.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
+    RouterMenu: typeof import('./../components/RouterMenu/index.vue')['default']
     RouterView: typeof import('vue-router')['RouterView']
   }
 }

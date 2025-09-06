@@ -1,6 +1,6 @@
 import router from '@/router'
 import {authAccessToken, authLogout, authSmsLogin} from "@/api/auth";
-import {memberGetProfile} from "@/api/member";
+import {memberGetProfileApi} from "@/api/member";
 
 export const useUserStore = defineStore(
   // 唯一ID
@@ -13,7 +13,7 @@ export const useUserStore = defineStore(
     const userInfo = ref(localStorage.getItem('userInfo') ? JSON.parse(<string>localStorage.getItem('userInfo')) : {})
     const permissions = ref<string[]>([])
     const isLogin = computed(() => {
-      return !!token.value;
+      return !!token.value
     })
 
     // 第三方扫码登录
@@ -46,13 +46,10 @@ export const useUserStore = defineStore(
 
     // 手动登出
     async function logout() {
-      await authLogout()
-      // 此处仅清除计算属性 isLogin 中判断登录状态过期的变量，以保证在弹出登录窗口模式下页面展示依旧正常
       localStorage.removeItem('token')
       token.value = ''
-      router.push({
-        name: 'home',
-      }).then(logoutCleanStatus)
+      nickname.value = ''
+      await authLogout()
     }
 
     // 请求登出
@@ -80,7 +77,7 @@ export const useUserStore = defineStore(
 
     // 获取用户信息
     async function getUserInfo() {
-      const res = await memberGetProfile()
+      const res = await memberGetProfileApi()
       avatar.value = res.data.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + res.data.nickname
       nickname.value = res.data.nickname
       userInfo.value = res.data
