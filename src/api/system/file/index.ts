@@ -5,9 +5,9 @@ import type {FileQuery, FileVo} from "@/api/system/file/types.ts";
 /**
  * 文件管理-上传
  */
-export function fileUploadApi(file: File): Promise<AxiosResponse<FileVo>> {
+export function fileUploadApi(file: any): Promise<AxiosResponse<FileVo>> {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('file', file.blob(), file.filename());
   return api({
     url: '/file/upload',
     method: 'post',

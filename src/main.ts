@@ -3,6 +3,7 @@ import VWave from 'v-wave'
 import {downloadAndInstall} from '@/iconify'
 import icons from '@/iconify/index.json'
 import App from './App.vue'
+import Editor from '@tinymce/tinymce-vue'
 import i18n from './locales'
 import router from './router'
 import pinia from './store'
@@ -23,6 +24,7 @@ app.use(pinia)
 app.use(router)
 app.use(uiProvider)
 app.use(i18n)
+app.component("TinyMCE", Editor)
 
 if (icons.isOfflineUse) {
   for (const info of icons.collections) {

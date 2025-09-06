@@ -35,7 +35,7 @@ export default defineFakeRoute([
     url: '/mock/{{#if relativePath}}{{ relativePath }}/{{/if}}{{ snakeCase moduleName }}/detail',
     method: 'get',
     response: ({ query }) => {
-      const info = AllList.filter(item => item.id === query.id)
+      const info = AllList.filter(item => item.id === ~~query.id)
       return {
         error: '',
         status: 1,

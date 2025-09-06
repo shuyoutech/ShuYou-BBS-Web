@@ -20,7 +20,7 @@ async function handleAfterLogin() {
 </script>
 
 <template>
-  <FaModal v-model="isShow" :header="false" :footer="false" :closable="false" :close-on-click-overlay="false" :close-on-press-escape="false">
+  <FaModal v-model="isShow" :z-index="10000" :header="false" :footer="false" :closable="false" :close-on-click-overlay="false" :close-on-press-escape="false">
     <LoginAgainForm @on-after-login="handleAfterLogin" />
   </FaModal>
 </template>

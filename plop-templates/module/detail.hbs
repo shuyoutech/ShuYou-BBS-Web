@@ -26,19 +26,17 @@ function onSubmit() {
 }
 
 function onCancel() {
-  router.close({ name: 'pagesExampleGeneralFormModeList' })
+  router.close({ name: 'routeName' })
 }
 </script>
 
 <template>
   <div>
     <FaPageHeader :title="route.name === 'routerName' ? '新增{{ cname }}' : '编辑{{ cname }}'">
-      <ElButton size="default" round @click="onCancel">
-        <template #icon>
-          <FaIcon name="i-ep:arrow-left" />
-        </template>
+      <FaButton variant="outline" size="sm" class="rounded-full" @click="onCancel">
+        <FaIcon name="i-ep:arrow-left" />
         返回
-      </ElButton>
+      </FaButton>
     </FaPageHeader>
     <FaPageMain>
       <ElRow>
@@ -48,12 +46,14 @@ function onCancel() {
       </ElRow>
     </FaPageMain>
     <FaFixedActionBar>
-      <ElButton type="primary" size="large" @click="onSubmit">
-        提交
-      </ElButton>
-      <ElButton size="large" @click="onCancel">
-        取消
-      </ElButton>
+      <div class="flex-center gap-4">
+        <FaButton @click="onSubmit">
+          提交
+        </FaButton>
+        <FaButton variant="outline" @click="onCancel">
+          取消
+        </FaButton>
+      </div>
     </FaFixedActionBar>
   </div>
 </template>

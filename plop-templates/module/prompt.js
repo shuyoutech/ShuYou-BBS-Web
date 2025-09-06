@@ -88,11 +88,6 @@ export default {
       },
       {
         type: 'add',
-        path: `${data.path}/{{snakeCase name}}/components/FormMode/index.vue`,
-        templateFile: 'plop-templates/module/mode.hbs',
-      },
-      {
-        type: 'add',
         path: `src/api/modules/${fileName}.ts`,
         templateFile: 'plop-templates/module/api.hbs',
         data: {

@@ -93,7 +93,7 @@ watch(() => menuStore.actived, (val, oldVal) => {
         <FaButton v-show="!isCollapse" variant="secondary" size="icon" class="h-8 w-8" @click="settingsStore.toggleSidebarAutoCollapse()">
           <FaIcon :name="settingsStore.settings.menu.subMenuAutoCollapse ? 'i-lucide:pin-off' : 'i-lucide:pin'" class="size-4" />
         </FaButton>
-        <FaButton variant="secondary" size="icon" class="h-8 w-8 transition" :class="{ '-rotate-z-180': settingsStore.settings.menu.subMenuCollapse }" @click="settingsStore.toggleSidebarCollapse()">
+        <FaButton v-show="!settingsStore.settings.menu.subMenuAutoCollapse" variant="secondary" size="icon" class="h-8 w-8 transition" :class="{ '-rotate-z-180': settingsStore.settings.menu.subMenuCollapse }" @click="settingsStore.toggleSidebarCollapse()">
           <FaIcon name="toolbar-collapse" class="size-4" />
         </FaButton>
       </div>

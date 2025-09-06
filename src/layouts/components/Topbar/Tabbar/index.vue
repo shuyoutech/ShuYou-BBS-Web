@@ -74,6 +74,7 @@ const activePseudoTabWidth = computed(() => {
   return `${tabRef.value?.find(item => Number.parseInt(item.dataset.index!) === index)?.offsetWidth || 0}px`
 })
 
+const isAnimating = ref(false)
 const isDragging = ref(false)
 let tabSortable: Sortable
 onMounted(() => {
@@ -254,6 +255,34 @@ function iconName(isActive: boolean, icon: Tabbar.recordRaw['icon'], activeIcon:
   return name
 }
 
+const visibleTabIndex = ref<number[]>([])
+function getVisibleTabs() {
+  const containerWidth = tabsRef.value?.ref?.$el.clientWidth ?? 0
+  const scrollLeft = tabsRef.value?.ref?.el?.viewportElement?.scrollLeft ?? 0
+  visibleTabIndex.value = []
+  if (tabRef.value) {
+    for (let i = 0; i < tabRef.value.length; i++) {
+      const tab = tabRef.value[i]
+      const tabLeft = tab.offsetLeft
+      const tabRight = tabLeft + tab.offsetWidth
+      // 检查标签页是否在可视区域内
+      if (tabLeft < scrollLeft + containerWidth && tabRight > scrollLeft) {
+        if (i >= 0 && i < tabbarStore.list.length) {
+          visibleTabIndex.value.push(i)
+        }
+      }
+    }
+  }
+}
+function getVisibleTabIndex(arrayIndex: number) {
+  return visibleTabIndex.value.findIndex(visibleTab => visibleTab === arrayIndex) ?? -1
+}
+watch(() => keys.alt, (val) => {
+  if (val) {
+    getVisibleTabs()
+  }
+})
+
 onMounted(() => {
   hotkeys('alt+left,alt+right,alt+w,alt+1,alt+2,alt+3,alt+4,alt+5,alt+6,alt+7,alt+8,alt+9,alt+0', (e, handle) => {
     if (settingsStore.settings.tabbar.enable && settingsStore.settings.tabbar.enableHotkeys) {
@@ -289,7 +318,9 @@ onMounted(() => {
         case 'alt+9':
         {
           const number = Number(handle.key.split('+')[1])
-          tabbarStore.list[number - 1]?.fullPath && router.push(tabbarStore.list[number - 1].fullPath)
+          if (visibleTabIndex.value[number - 1] !== undefined) {
+            router.push(tabbarStore.list[visibleTabIndex.value[number - 1]].fullPath)
+          }
           break
         }
         // 切换到最后一个标签页
@@ -315,14 +346,14 @@ onUnmounted(() => {
           [`tabs-${settingsStore.settings.tabbar.style}`]: settingsStore.settings.tabbar.style !== '',
         }"
       >
-        <TransitionGroup ref="tabContainerRef" :name="!isDragging ? 'tabbar' : undefined" tag="div" class="tab-container" :class="{ dragging: isDragging }">
+        <TransitionGroup ref="tabContainerRef" :name="!isDragging ? 'tabbar' : undefined" tag="div" class="tab-container" :class="{ dragging: isDragging }" @before-leave="isAnimating = true" @after-leave="isAnimating = false">
           <div
             v-for="(element, index) in tabbarStore.list" :key="element.tabMerge === 'routeName' && element.routeName ? element.routeName : element.tabId"
             ref="tabRef" :data-index="index" class="tab" :class="{
               'tab-ontop': settingsStore.settings.topbar.switchTabbarAndToolbar,
               'actived': element.tabId === activedTabId,
               'pinned': element.isPermanent || element.isPin,
-            }" @click="router.push(element.fullPath)" @dblclick="onTabbarDblclick(element)"
+            }" @click="!isAnimating && router.push(element.fullPath)" @dblclick="!isAnimating && onTabbarDblclick(element)"
           >
             <FaContextMenu :items="contextMenuItems(element)">
               <div class="size-full">
@@ -340,8 +371,8 @@ onUnmounted(() => {
                     <div v-else-if="!element.isPermanent && tabbarStore.list.length > 1" class="action-icon" @click.stop="tabbar.closeById(element.tabId)" @dblclick.stop>
                       <FaIcon name="i-ri:close-fill" />
                     </div>
-                    <div v-show="keys.alt && index < 9" class="hotkey-number">
-                      {{ index + 1 }}
+                    <div v-show="keys.alt && getVisibleTabIndex(index) >= 0 && getVisibleTabIndex(index) < 9" class="hotkey-number">
+                      {{ getVisibleTabIndex(index) + 1 }}
                     </div>
                     <div class="drag-handle" />
                   </div>

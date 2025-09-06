@@ -141,7 +141,7 @@ const enableAppSetting = import.meta.env.VITE_APP_SETTING
         <div class="invisible fixed inset-0 z-1009 bg-black/50 op-0 backdrop-blur-sm transition-opacity" :class="{ 'op-100! visible!': settingsStore.mode === 'mobile' && !settingsStore.settings.menu.subMenuCollapse }" @click="settingsStore.toggleSidebarCollapse()" />
         <div class="main-container pb-[var(--g-main-container-padding-bottom)]">
           <Topbar />
-          <div class="main">
+          <div id="app-content" class="main">
             <div v-show="settingsStore.mainPageMaximizeStatus" class="exit-main-page-maximize" @click="settingsStore.setMainPageMaximize()">
               <FaIcon name="i-ri:logout-box-line" />
             </div>
@@ -286,6 +286,7 @@ const enableAppSetting = import.meta.env.VITE_APP_SETTING
       height: 100%;
       margin: calc(var(--g-tabbar-actual-height) + var(--g-toolbar-actual-height)) auto 0;
       overflow: hidden;
+      background-color: var(--g-main-area-bg);
       box-shadow: -1px 0 0 0 hsl(var(--border)), 1px 0 0 0 hsl(var(--border));
 
       [data-app-width-mode-scope="inner"][data-app-width-mode="adaption"]:not([data-mode="mobile"]) & {

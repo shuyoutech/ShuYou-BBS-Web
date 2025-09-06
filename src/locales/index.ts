@@ -1,18 +1,51 @@
-import {createI18n} from 'vue-i18n'
+import type { App } from 'vue'
+import messages from '@intlify/unplugin-vue-i18n/messages'
+import { cloneDeep } from 'es-toolkit'
+import { createI18n } from 'vue-i18n'
 
-import enUS from './lang/en-US.json'
-import zhCN from './lang/zh-CN.json'
-
-type MessageSchema = typeof enUS
-
-const i18n = createI18n<[MessageSchema], 'en-US' | 'zh-CN'>({
+const i18n = createI18n({
   legacy: false,
-  locale: localStorage.getItem("language") || "zh-CN",
-  fallbackLocale: 'en-US',
-  messages: {
-    'en-US': enUS,
-    'zh-CN': zhCN,
-  }
+  flatJson: true,
+  fallbackLocale: 'zh-cn',
+  messages,
+  missingWarn: false,
+  fallbackWarn: false,
 })
 
-export default i18n;
+function install(app: App) {
+  i18n.global.locale.value = 'zh-cn'
+  app.use(i18n)
+}
+
+function getLocales() {
+  return cloneDeep(messages)
+}
+
+const localesName: Record<string, any> = {}
+for (const key in messages) {
+  switch (key) {
+    case 'zh-cn':
+      localesName[key] = '中文(简体)'
+      break
+    case 'zh-tw':
+      localesName[key] = '中文(繁體)'
+      break
+    case 'en':
+      localesName[key] = 'English'
+      break
+  }
+}
+
+// 用于路由 meta 配置，方便在 VSCode I18n Ally 插件进行显示，无实际作用
+function $t(key: string) {
+  return key
+}
+
+export default { install }
+
+export {
+  $t,
+  getLocales,
+  i18n,
+  localesName,
+}

@@ -6,11 +6,12 @@ meta:
 
 {{/if}}
 <script setup lang="ts">
-import api from '@/api/modules/{{ fileName }}'
-import eventBus from '@/utils/eventBus'
-import { ElMessageBox } from 'element-plus'
 import { toast } from 'vue-sonner'
-import FormMode from './components/FormMode/index.vue'
+import api from '@/api/modules/{{ fileName }}'
+import { useFaDrawer } from '@/ui/components/FaDrawer'
+import { useFaModal } from '@/ui/components/FaModal'
+import eventBus from '@/utils/eventBus'
+import DetailForm from './components/DetailForm/index.vue'
 
 defineOptions({
   name: '{{ componentName }}',
@@ -25,14 +26,13 @@ const tableAutoHeight = ref(false)
 /**
  * 详情展示模式
  * router 路由跳转
- * dialog 对话框
+ * modal 模态框
  * drawer 抽屉
  */
-const formMode = ref<'router' | 'dialog' | 'drawer'>('router')
+const formMode = ref<'router' | 'modal' | 'drawer'>('router')
 
 // 详情
 const formModeProps = ref({
-  visible: false,
   id: '',
 })
 
@@ -98,6 +98,52 @@ function sortChange({ prop, order }: { prop: string, order: string }) {
   onSortChange(prop, order).then(() => getDataList())
 }
 
+const formRef = ref<InstanceType<typeof DetailForm>>()
+
+const { open: openModal, update: updateModal } = useFaModal().create({
+  destroyOnClose: true,
+  closeOnClickOverlay: false,
+  closeOnPressEscape: false,
+  beforeClose: (action, done) => {
+    if (action === 'confirm') {
+      // 调用 DetailForm 组件内部 submit 方法
+      formRef.value?.submit().then(() => {
+        getDataList()
+        done()
+      })
+    }
+    else {
+      done()
+    }
+  },
+  content: () => h(DetailForm, {
+    ref: formRef,
+    id: formModeProps.value.id,
+  }),
+})
+
+const { open: openDrawer, update: updateDrawer } = useFaDrawer().create({
+  destroyOnClose: true,
+  closeOnClickOverlay: false,
+  closeOnPressEscape: false,
+  beforeClose: (action, done) => {
+    if (action === 'confirm') {
+      // 调用 DetailForm 组件内部 submit 方法
+      formRef.value?.submit().then(() => {
+        getDataList()
+        done()
+      })
+    }
+    else {
+      done()
+    }
+  },
+  content: () => h(DetailForm, {
+    ref: formRef,
+    id: formModeProps.value.id,
+  }),
+})
+
 function onCreate() {
   if (formMode.value === 'router') {
     router.push({
@@ -106,7 +152,18 @@ function onCreate() {
   }
   else {
     formModeProps.value.id = ''
-    formModeProps.value.visible = true
+    if (formMode.value === 'modal') {
+      updateModal({
+        title: '新增',
+      })
+      openModal()
+    }
+    else {
+      updateDrawer({
+        title: '新增',
+      })
+      openDrawer()
+    }
   }
 }
 
@@ -121,17 +178,32 @@ function onEdit(row: any) {
   }
   else {
     formModeProps.value.id = row.id
-    formModeProps.value.visible = true
+    if (formMode.value === 'modal') {
+      updateModal({
+        title: '编辑',
+      })
+      openModal()
+    }
+    else {
+      updateDrawer({
+        title: '编辑',
+      })
+      openDrawer()
+    }
   }
 }
 
 function onDel(row: any) {
-  ElMessageBox.confirm(`确认删除「${row.title}」吗？`, '确认信息').then(() => {
-    api.delete(row.id).then(() => {
-      getDataList()
-      toast.success('模拟删除成功')
-    })
-  }).catch(() => {})
+  useFaModal().confirm({
+    title: '确认信息',
+    content: `确认删除「${row.title}」吗？`,
+    onConfirm: () => {
+      api.delete(row.id).then(() => {
+        getDataList()
+        toast.success('模拟删除成功')
+      })
+    },
+  })
 }
 </script>
 
@@ -201,7 +273,6 @@ function onDel(row: any) {
       </ElTable>
       <ElPagination :current-page="pagination.page" :total="pagination.total" :page-size="pagination.size" :page-sizes="pagination.sizes" :layout="pagination.layout" :hide-on-single-page="false" class="pagination" background @size-change="sizeChange" @current-change="currentChange" />
     </FaPageMain>
-    <FormMode v-if="formMode === 'dialog' || formMode === 'drawer'" :id="formModeProps.id" v-model="formModeProps.visible" :mode="formMode" @success="getDataList" />
   </div>
 </template>
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { SubMenuItemProps } from './types'
+import qs from 'qs'
 import { cn } from '@/utils'
 import { rootMenuInjectionKey } from './types'
 
@@ -54,7 +55,7 @@ defineExpose({
       'px-1 py-2': level === 0 && rootMenu.props.mode === 'horizontal',
     })"
   >
-    <router-link v-slot="{ href, navigate }" custom :to="uniqueKey.at(-1) ?? ''">
+    <router-link v-slot="{ href, navigate }" custom :to="(uniqueKey.at(-1) ?? '') + (item.meta?.query ? `?${qs.stringify(item.meta?.query)}` : '')">
       <FaTooltip :disabled="level !== 0 || subMenu" :text="generateI18nTitle(item.meta?.title)" :side="rootMenu.props.mode === 'vertical' ? 'right' : 'bottom'" class="h-full w-full">
         <component
           :is="subMenu ? 'div' : 'a'" v-bind="{

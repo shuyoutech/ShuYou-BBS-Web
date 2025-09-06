@@ -38,24 +38,9 @@
           <label class="form-label">内容</label>
           <FaPageMain>
             <div class="min-w-full prose">
-              <TinymceEditor v-model="content" :init="defaultSetting" />
+              <TinyMCE api-key="yaqateu3ygrcimjd5431nbkeun90laoifukj05jn1utl7g3g" v-model="content" :init="editorInit"/>
             </div>
           </FaPageMain>
-        </div>
-
-        <!-- 板块选择 -->
-        <div class="form-section">
-          <label class="form-label">板块</label>
-          <div class="section-selector">
-            <select v-model="formData.section" class="section-select">
-              <option value="">请选择板块</option>
-              <option value="face-design">捏脸专区</option>
-              <option value="strategy">攻略分享</option>
-              <option value="discussion">讨论交流</option>
-              <option value="showcase">作品展示</option>
-            </select>
-            <FaIcon name="i-mdi:chevron-down" class="select-arrow"/>
-          </div>
         </div>
 
         <!-- 捏脸文件上传 -->
@@ -69,10 +54,6 @@
             <span class="file-status">
               {{ selectedFaceFile ? selectedFaceFile.name : '未选择任何文件' }}
             </span>
-          </div>
-          <div class="file-instructions">
-            <p>请在以下地址提取需要上传的cus文件:</p>
-            <p class="file-path">游戏所在盘/WeGameApps/rail apps/命运方舟(2000811)/EFGame /Customizing</p>
           </div>
           <input
             ref="faceFileInput"
@@ -91,24 +72,14 @@
               <p>1. 封面需清晰并契合捏脸角色主题,好的封面有利于获得更多曝光;</p>
               <p>2. 封面图支持JPG、JPEG、PNG; 200kb以内,建议图片尺寸:524×446或262×223;</p>
             </div>
-            <div class="cover-upload-area" @click="selectCoverImage" @dragover.prevent @drop="handleDrop">
-              <div v-if="!coverImagePreview" class="upload-placeholder">
-                <FaIcon name="i-mdi:plus" class="upload-icon"/>
-                <span>点击上传</span>
-              </div>
-              <div v-else class="cover-preview">
-                <img :src="coverImagePreview" alt="封面预览" class="preview-image"/>
-                <button class="remove-cover" @click.stop="removeCover">
-                  <FaIcon name="i-mdi:close"/>
-                </button>
-              </div>
-            </div>
-            <input
-              ref="coverImageInput"
-              type="file"
-              accept="image/jpeg,image/jpg,image/png"
-              @change="handleCoverImageChange"
-              style="display: none"
+            <FaImageUpload
+              v-model="coverImg"
+              action="/file/upload"
+              :width="260"
+              :height="220"
+              :ext="['jpg', 'png', 'gif', 'bmp']"
+              :after-upload="(response) => response.fileUrl"
+              @on-success="handleCoverImg"
             />
           </div>
         </div>
@@ -126,41 +97,26 @@
 </template>
 
 <script setup lang="ts">
-import TinymceEditor from '@tinymce/tinymce-vue'
-import 'tinymce/themes/silver/theme'
-import 'tinymce/icons/default/icons'
-import 'tinymce/models/dom'
-import 'tinymce/plugins/autolink'
-import 'tinymce/plugins/autoresize'
-import 'tinymce/plugins/fullscreen'
-import 'tinymce/plugins/image'
-import 'tinymce/plugins/insertdatetime'
-import 'tinymce/plugins/link'
-import 'tinymce/plugins/lists'
-import 'tinymce/plugins/media'
-import 'tinymce/plugins/preview'
-import 'tinymce/plugins/table'
-import 'tinymce/plugins/wordcount'
-import 'tinymce/plugins/code'
-import 'tinymce/plugins/searchreplace'
 
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import {ref, computed, onMounted} from 'vue'
+import {useRouter} from 'vue-router'
+import {ElMessage} from 'element-plus'
+import {fileUploadApi} from "@/api/system/file";
+import {toast} from "vue-sonner";
 
 const router = useRouter()
 
-
-const defaultSetting = ref({
+const editorInit = ref({
   language_url: 'tinymce/langs/zh-Hans.js',
   language: 'zh-Hans',
-  skin_url: 'tinymce/skins/ui/oxide-dark',
-  content_css: 'tinymce/skins/content/dark/content.min.css',
-  min_height: 250,
-  max_height: 600,
+  skin_url: 'tinymce/skins/ui/oxide',
+  content_css: 'tinymce/skins/content/default/content.min.css',
+  min_height: 500,
+  max_height: 800,
   selector: 'textarea',
   plugins: 'autolink autoresize fullscreen image insertdatetime link lists media preview table wordcount code searchreplace',
   toolbar: 'undo redo | blocks | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | forecolor backcolor removeformat | link image media table insertdatetime searchreplace | preview code fullscreen',
+  images_file_types: 'svg,jpeg,jpg,jpe,jfi,jif,jfif,png,gif,bmp,webp',
   branding: false,
   menubar: false,
   toolbar_mode: 'sliding',
@@ -171,27 +127,20 @@ const defaultSetting = ref({
     '%H:%M:%S',
   ],
   // https://www.tiny.cloud/docs/tinymce/6/file-image-upload/#images_upload_handler
-  images_upload_handler: (blobInfo: any) => new Promise((resolve) => {
-    const img = `data:image/jpeg;base64,${blobInfo.base64()}`
-    resolve(img)
+  images_upload_handler: (blobInfo: any, _progress: any) => new Promise((resolve, _reject) => {
+    fileUploadApi(blobInfo).then(({data}) => {
+      resolve(data.fileUrl);
+    });
   }),
-})
+});
+
+const coverImg = ref<string[]>([])
 
 // 表单数据
 const formData = ref({
   title: '',
   content: '',
   section: 'face-design'
-})
-
-// 编辑器状态
-const formats = ref({
-  bold: false,
-  fontSize: '16px',
-  alignLeft: true,
-  alignCenter: false,
-  alignRight: false,
-  justify: false
 })
 
 // 文件上传状态
@@ -201,23 +150,21 @@ const coverImageFile = ref<File | null>(null)
 
 // 验证状态
 const titleError = ref('')
-const contentError = ref('')
 
 // 发布状态
 const isPublishing = ref(false)
 
 // 引用
-const editorContent = ref<HTMLElement>()
 const faceFileInput = ref<HTMLInputElement>()
 const coverImageInput = ref<HTMLInputElement>()
 
 // 计算属性
 const canPublish = computed(() => {
   return formData.value.title.length >= 5 &&
-         formData.value.content.length >= 11 &&
-         formData.value.section &&
-         selectedFaceFile.value &&
-         coverImageFile.value
+    formData.value.content.length >= 11 &&
+    formData.value.section &&
+    selectedFaceFile.value &&
+    coverImageFile.value
 })
 
 // 方法
@@ -228,52 +175,6 @@ const validateTitle = () => {
     titleError.value = '标题不能超过30个字符'
   } else {
     titleError.value = ''
-  }
-}
-
-const handleContentInput = (event: Event) => {
-  const target = event.target as HTMLElement
-  formData.value.content = target.innerText
-
-  if (formData.value.content.length < 11) {
-    contentError.value = '正文内容至少需要11个字符'
-  } else {
-    contentError.value = ''
-  }
-}
-
-const formatText = (format: string) => {
-  document.execCommand(format, false)
-  updateFormatState()
-}
-
-const updateFormatState = () => {
-  formats.value.bold = document.queryCommandState('bold')
-  formats.value.alignLeft = document.queryCommandState('justifyLeft')
-  formats.value.alignCenter = document.queryCommandState('justifyCenter')
-  formats.value.alignRight = document.queryCommandState('justifyRight')
-  formats.value.justify = document.queryCommandState('justifyFull')
-}
-
-const insertImage = () => {
-  const url = prompt('请输入图片URL:')
-  if (url) {
-    document.execCommand('insertImage', false, url)
-  }
-}
-
-const insertLink = () => {
-  const url = prompt('请输入链接URL:')
-  if (url) {
-    document.execCommand('createLink', false, url)
-  }
-}
-
-const handlePaste = (event: ClipboardEvent) => {
-  event.preventDefault()
-  const text = event.clipboardData?.getData('text/plain')
-  if (text) {
-    document.execCommand('insertText', false, text)
   }
 }
 
@@ -291,64 +192,6 @@ const handleFaceFileChange = (event: Event) => {
     } else {
       ElMessage.error('请选择.cus格式的捏脸文件')
     }
-  }
-}
-
-const selectCoverImage = () => {
-  coverImageInput.value?.click()
-}
-
-const handleCoverImageChange = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (file) {
-    if (validateImageFile(file)) {
-      coverImageFile.value = file
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        coverImagePreview.value = e.target?.result as string
-      }
-      reader.readAsDataURL(file)
-      ElMessage.success('封面图片选择成功')
-    }
-  }
-}
-
-const validateImageFile = (file: File): boolean => {
-  const validTypes = ['image/jpeg', 'image/jpg', 'image/png']
-  if (!validTypes.includes(file.type)) {
-    ElMessage.error('请选择JPG、JPEG或PNG格式的图片')
-    return false
-  }
-  if (file.size > 200 * 1024) {
-    ElMessage.error('图片大小不能超过200KB')
-    return false
-  }
-  return true
-}
-
-const handleDrop = (event: DragEvent) => {
-  event.preventDefault()
-  const files = event.dataTransfer?.files
-  if (files && files.length > 0) {
-    const file = files[0]
-    if (validateImageFile(file)) {
-      coverImageFile.value = file
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        coverImagePreview.value = e.target?.result as string
-      }
-      reader.readAsDataURL(file)
-      ElMessage.success('封面图片上传成功')
-    }
-  }
-}
-
-const removeCover = () => {
-  coverImagePreview.value = ''
-  coverImageFile.value = null
-  if (coverImageInput.value) {
-    coverImageInput.value.value = ''
   }
 }
 
@@ -382,11 +225,19 @@ const goBack = () => {
   router.back()
 }
 
+function handleCoverImg(response: any) {
+  toast.success("123123123131331")
+  console.log("6666666", JSON.stringify(response))
+}
 
 const content = ref('')
 
-
 onMounted(() => {
+  toast('Event has been created', {
+    description: 'Monday, January 3rd at 6:00pm'
+  })
+
+  toast.success("123123123131331")
   // 设置默认板块
   formData.value.section = 'face'
 })
