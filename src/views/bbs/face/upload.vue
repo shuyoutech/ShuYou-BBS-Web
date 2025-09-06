@@ -1,108 +1,13 @@
-<template>
-  <div class="face-upload-container">
-    <!-- 页面头部 -->
-    <div class="page-header">
-      <div class="header-content">
-        <div class="header-left">
-          <FaIcon name="i-mdi:file-document-edit" class="header-icon"/>
-          <h1 class="page-title">发布帖子</h1>
-        </div>
-        <div class="header-actions">
-          <button class="btn btn-secondary" @click="goBack">返回</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 主要内容区域 -->
-    <div class="main-content">
-      <div class="form-container">
-        <!-- 标题输入 -->
-        <div class="form-section">
-          <label class="form-label">标题</label>
-          <div class="title-input-wrapper">
-            <input
-              v-model="formData.title"
-              type="text"
-              class="title-input"
-              placeholder="填写合适标题可以获得更多曝光哦"
-              maxlength="30"
-              @input="validateTitle"
-            />
-            <span class="char-counter">{{ formData.title.length }}/30</span>
-          </div>
-          <div v-if="titleError" class="error-message">{{ titleError }}</div>
-        </div>
-
-        <!-- 内容编辑器 -->
-        <div class="form-section">
-          <label class="form-label">内容</label>
-          <FaPageMain>
-            <div class="min-w-full prose">
-              <TinyMCE api-key="yaqateu3ygrcimjd5431nbkeun90laoifukj05jn1utl7g3g" v-model="content" :init="editorInit"/>
-            </div>
-          </FaPageMain>
-        </div>
-
-        <!-- 捏脸文件上传 -->
-        <div class="form-section">
-          <label class="form-label">捏脸文件</label>
-          <div class="file-upload-wrapper">
-            <button class="file-select-btn" @click="selectFaceFile">
-              <FaIcon name="i-mdi:file-upload"/>
-              选择文件
-            </button>
-            <span class="file-status">
-              {{ selectedFaceFile ? selectedFaceFile.name : '未选择任何文件' }}
-            </span>
-          </div>
-          <input
-            ref="faceFileInput"
-            type="file"
-            accept=".cus"
-            @change="handleFaceFileChange"
-            style="display: none"
-          />
-        </div>
-
-        <!-- 捏脸封面上传 -->
-        <div class="form-section">
-          <label class="form-label">捏脸封面</label>
-          <div class="cover-upload-wrapper">
-            <div class="upload-instructions">
-              <p>1. 封面需清晰并契合捏脸角色主题,好的封面有利于获得更多曝光;</p>
-              <p>2. 封面图支持JPG、JPEG、PNG; 200kb以内,建议图片尺寸:524×446或262×223;</p>
-            </div>
-            <FaImageUpload
-              v-model="coverImg"
-              action="/file/upload"
-              :width="260"
-              :height="220"
-              :ext="['jpg', 'png', 'gif', 'bmp']"
-              :after-upload="(response) => response.fileUrl"
-              @on-success="handleCoverImg"
-            />
-          </div>
-        </div>
-
-        <!-- 发布按钮 -->
-        <div class="form-actions">
-          <button class="btn btn-secondary" @click="saveDraft">保存草稿</button>
-          <button class="btn btn-primary" @click="publishPost" :disabled="!canPublish || isPublishing">
-            {{ isPublishing ? '发布中...' : '发布帖子' }}
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 
-import {ref, computed, onMounted} from 'vue'
+import {ref, onMounted} from 'vue'
 import {useRouter} from 'vue-router'
-import {ElMessage} from 'element-plus'
+import type {FormInstance, FormRules} from 'element-plus'
 import {fileUploadApi} from "@/api/system/file";
+import {postSaveApi} from "@/api/bbs/post";
+import type {PostSaveBo} from "@/api/bbs/post/types.ts";
 import {toast} from "vue-sonner";
+import {dictOptionsApi} from "@/api/common";
 
 const router = useRouter()
 
@@ -134,114 +39,123 @@ const editorInit = ref({
   }),
 });
 
-const coverImg = ref<string[]>([])
-
-// 表单数据
-const formData = ref({
+const formRef = useTemplateRef<FormInstance>('formRef')
+const formRules = ref<FormRules>({
+  title: [
+    {required: true, message: '请输入标题', trigger: 'blur'},
+  ],
+  content: [
+    {required: true, message: '请输入内容', trigger: 'blur'},
+  ],
+  coverImg: [
+    {required: true, message: '请上传封面', trigger: 'blur'},
+  ]
+})
+const form = reactive({
   title: '',
   content: '',
-  section: 'face-design'
+  coverImg: [],
 })
 
-// 文件上传状态
-const selectedFaceFile = ref<File | null>(null)
-const coverImagePreview = ref<string>('')
-const coverImageFile = ref<File | null>(null)
-
-// 验证状态
-const titleError = ref('')
-
-// 发布状态
-const isPublishing = ref(false)
-
-// 引用
-const faceFileInput = ref<HTMLInputElement>()
-const coverImageInput = ref<HTMLInputElement>()
-
-// 计算属性
-const canPublish = computed(() => {
-  return formData.value.title.length >= 5 &&
-    formData.value.content.length >= 11 &&
-    formData.value.section &&
-    selectedFaceFile.value &&
-    coverImageFile.value
+const data = reactive<PostSaveBo>({
+  plate: '1',
+  title: '',
+  content: '',
+  coverImgUrl: '',
 })
 
-// 方法
-const validateTitle = () => {
-  if (formData.value.title.length < 5) {
-    titleError.value = '标题至少需要5个字符'
-  } else if (formData.value.title.length > 30) {
-    titleError.value = '标题不能超过30个字符'
-  } else {
-    titleError.value = ''
-  }
-}
-
-const selectFaceFile = () => {
-  faceFileInput.value?.click()
-}
-
-const handleFaceFileChange = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (file) {
-    if (file.name.endsWith('.cus')) {
-      selectedFaceFile.value = file
-      ElMessage.success('捏脸文件选择成功')
-    } else {
-      ElMessage.error('请选择.cus格式的捏脸文件')
+const onSubmit = () => {
+  formRef.value?.validate((valid) => {
+    alert(valid)
+    if (valid) {
+      data.title = form.title
+      data.content = form.content
+      data.coverImgUrl = form.coverImg[0]
+      alert(JSON.stringify(data))
+      postSaveApi(data).then(() => {
+        toast.success('发布成功')
+      })
     }
-  }
-}
-
-const saveDraft = () => {
-  // 保存草稿逻辑
-  ElMessage.success('草稿保存成功')
-}
-
-const publishPost = async () => {
-  if (!canPublish.value) {
-    ElMessage.error('请完善所有必填信息')
-    return
-  }
-
-  isPublishing.value = true
-
-  try {
-    // 模拟发布过程
-    await new Promise(resolve => setTimeout(resolve, 2000))
-
-    ElMessage.success('帖子发布成功！')
-    router.push('/')
-  } catch (error) {
-    ElMessage.error('发布失败，请重试')
-  } finally {
-    isPublishing.value = false
-  }
+  })
 }
 
 const goBack = () => {
   router.back()
 }
 
-function handleCoverImg(response: any) {
-  toast.success("123123123131331")
-  console.log("6666666", JSON.stringify(response))
-}
-
-const content = ref('')
-
 onMounted(() => {
-  toast('Event has been created', {
-    description: 'Monday, January 3rd at 6:00pm'
-  })
-
-  toast.success("123123123131331")
-  // 设置默认板块
-  formData.value.section = 'face'
 })
 </script>
+
+<template>
+  <div class="face-upload-container">
+    <!-- 页面头部 -->
+    <div class="page-header">
+      <div class="header-content">
+        <div class="header-left">
+          <FaIcon name="i-mdi:file-document-edit" class="header-icon"/>
+          <h1 class="page-title">发布帖子</h1>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-secondary" @click="goBack">返回</button>
+        </div>
+      </div>
+    </div>
+    <!-- 主要内容区域 -->
+    <div class="main-content">
+      <ElForm ref="formRef" :model="form" :rules="formRules">
+        <div class="form-container">
+          <!-- 标题输入 -->
+          <div class="form-section">
+            <ElFormItem label="标题" prop="title">
+              <ElInput v-model="form.title" maxlength="30" placeholder="填写合适标题可以获得更多曝光哦"/>
+            </ElFormItem>
+          </div>
+
+          <!-- 捏脸封面上传 -->
+          <div class="form-section">
+            <ElFormItem label="捏脸封面" prop="coverImg">
+              <div class="cover-upload-wrapper">
+                <div class="upload-instructions">
+                  <p>1. 封面需清晰并契合捏脸角色主题,好的封面有利于获得更多曝光;</p>
+                  <p>2. 封面图支持JPG、JPEG、PNG; 200kb以内,建议图片尺寸:524×446或262×223;</p>
+                </div>
+                <FaImageUpload
+                  v-model="form.coverImg"
+                  action="/file/upload"
+                  :width="524"
+                  :height="446"
+                  :dimension="{width: 524, height: 446}"
+                  :ext="['jpg', 'png', 'gif', 'bmp']"
+                  :after-upload="(response) => response.fileUrl"
+                />
+              </div>
+            </ElFormItem>
+          </div>
+
+          <!-- 内容编辑器 -->
+          <div class="form-section">
+            <ElFormItem label="内容" prop="content">
+              <FaPageMain>
+                <div class="min-w-full prose">
+                  <TinyMCE api-key="yaqateu3ygrcimjd5431nbkeun90laoifukj05jn1utl7g3g" v-model="form.content"
+                           :init="editorInit"/>
+                </div>
+              </FaPageMain>
+            </ElFormItem>
+          </div>
+        </div>
+      </ElForm>
+      <!-- 发布按钮 -->
+      <div class="form-actions">
+        <button class="btn btn-primary" @click="onSubmit">
+          发布帖子
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
 
 <style scoped>
 .face-upload-container {

@@ -100,7 +100,6 @@ function onSelectFile(e: Event) {
         toast.error(t('typeError', {ext: props.ext.join(' / ')}), {
           description: file.name,
         })
-        console.log("12313131312313131313",ext)
         continue
       }
     }
