@@ -24,8 +24,9 @@ const postQuery = reactive<PageQuery<PostQuery>>({
   }
 })
 
-const viewFace = (_face: any) => {
-
+const viewFace = (face: PostVo) => {
+  // 跳转到捏脸详情页面
+  router.push(`/face/detail/${face.id}`)
 }
 
 const likeFace = (face: PostVo) => {
@@ -220,6 +221,10 @@ onMounted(() => {
               <div class="work-image">
                 <img :src="face.coverImgUrl" :alt="face.title" class="cover-img"/>
                 <div class="work-overlay">
+                  <div class="overlay-hint">
+                    <FaIcon name="i-mdi:eye" class="hint-icon" />
+                    <span class="hint-text">点击查看详情</span>
+                  </div>
                 </div>
               </div>
               <div class="work-info">
@@ -656,11 +661,17 @@ onMounted(() => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: all 0.3s ease;
+  position: relative;
 }
 
 .work-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.work-card:active {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
 .work-image {
@@ -699,6 +710,26 @@ onMounted(() => {
 
 .work-card:hover .work-overlay {
   opacity: 1;
+}
+
+.overlay-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  text-align: center;
+}
+
+.hint-icon {
+  font-size: 32px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.hint-text {
+  font-size: 14px;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 

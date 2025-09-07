@@ -56,7 +56,17 @@ const routes: any[] = [
         name: 'faceUpload',
         component: () => import('@/views/bbs/face/upload.vue'),
         meta: {
-          showInMenu: false
+          showInMenu: false,
+          title: '上传捏脸'
+        },
+      },
+      {
+        path: '/face/detail/:id',
+        name: 'faceDetail',
+        component: () => import('@/views/bbs/face/detail.vue'),
+        meta: {
+          showInMenu: false,
+          title: '捏脸详情'
         },
       },
     ],

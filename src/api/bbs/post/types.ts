@@ -13,35 +13,35 @@ export interface PostQuery {
  * 帖子详情
  */
 export interface PostVo {
-  id: string;             //帖子ID
-  createTime: string;     //创建时间
-  createTimeFormat: string//时间格式化
-  status: string;         //帖子状态
-  userId: string;         //发帖用户ID
-  userName: string;       //用户名称
-  userAvatar: string;     //用户头像
-  plate: string;          //帖子板块
-  category: string;       //帖子分类
-  tags: string[];         //标签集合
-  tagNames: string[];     //标签名称集合
-  title: string;          //帖子标题
-  content: string;        //帖子内容
-  summary: string;        //帖子摘要
-  coverImgUrl: string;    //封面图片URL
-  viewCount: number;      //浏览次数
-  likeCount: number;      //点赞次数
-  liked: boolean;         //是否点赞过
-  commentCount: number;   //评论次数
-  dislikeCount: number;   //点踩次数
-  favoriteCount: number;  //收藏次数
-  shareCount: number;     //分享次数
-  reportCount: number;    //举报次数
-  pinned: boolean;        //是否置顶
-  featured: boolean;      //是否精华
-  ipAddress: string;      //发帖IP地址:12.12.12.12
-  ipLocation: string;     //发帖IP地理位置:江苏
-  attachmentIds: string[];//附件文件IDS
-  reviewReason: string;   //审核原因
+  id?: string;             //帖子ID
+  createTime?: string;     //创建时间
+  createTimeFormat?: string//时间格式化
+  status?: string;         //帖子状态
+  userId?: string;         //发帖用户ID
+  userName?: string;       //用户名称
+  userAvatar?: string;     //用户头像
+  plate?: string;          //帖子板块
+  category?: string;       //帖子分类
+  tags?: string[];         //标签集合
+  tagNames?: string[];     //标签名称集合
+  title?: string;          //帖子标题
+  content?: string;        //帖子内容
+  summary?: string;        //帖子摘要
+  coverImgUrl?: string;    //封面图片URL
+  viewCount?: number;      //浏览次数
+  likeCount?: number;      //点赞次数
+  liked?: boolean;         //是否点赞过
+  commentCount?: number;   //评论次数
+  dislikeCount?: number;   //点踩次数
+  favoriteCount?: number;  //收藏次数
+  shareCount?: number;     //分享次数
+  reportCount?: number;    //举报次数
+  pinned?: boolean;        //是否置顶
+  featured?: boolean;      //是否精华
+  ipAddress?: string;      //发帖IP地址:12.12.12.12
+  ipLocation?: string;     //发帖IP地理位置:江苏
+  attachmentIds?: string[];//附件文件IDS
+  reviewReason?: string;   //审核原因
 }
 
 /**
