@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {ref, onMounted} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
-import {postCommentApi, postDetailApi, postLikeApi, postUnlikeApi} from '@/api/bbs/post'
+import {postCommentApi, postDetailApi, postLikeApi, postReplyApi, postUnlikeApi} from '@/api/bbs/post'
 import type {PostVo} from '@/api/bbs/post/types'
 import {toast} from 'vue-sonner'
 import {commentPageApi} from "@/api/bbs/comment";
@@ -79,36 +79,18 @@ const likeComment = async (comment: any) => {
 }
 
 // 回复评论
-const replyComment = ref<PostCommentVo>()
+const replyComment = ref<Tree<PostCommentVo>>()
 const replyContent = ref('')
-const replyToComment = (comment: PostCommentVo) => {
+const replyToComment = (comment: Tree<PostCommentVo>) => {
   // 可以添加更多回复逻辑，比如滚动到输入框
   replyComment.value = comment
-  replyContent.value = ''
-  console.log(comment)
-}
-
-// 取消回复
-const cancelReply = () => {
-  replyComment.value = undefined
   replyContent.value = ''
 }
 
 // 提交回复
 const submitReply = async () => {
-  if (!replyContent.value.trim() || !replyComment.value || !replyComment.value.metadata) return
-
-  try {
-    // 这里应该调用回复API
-    await postCommentApi(faceId, replyContent.value, replyComment.value.metadata.id)
-    toast.success('回复成功')
-    replyContent.value = ''
-    replyComment.value = undefined
-    // 重新加载评论
-    await loadComments()
-  } catch (error) {
-    console.error('回复失败:', error)
-    toast.error('回复失败')
+  if (replyComment.value) {
+    await postReplyApi(faceId, replyComment.value.value, replyContent.value)
   }
 }
 
@@ -242,47 +224,49 @@ onMounted(() => {
           <div class="comments-list">
             <div
               v-for="(comment, index) in comments"
-              :key="comment.id"
-              class="comment-item"
+              :key="comment.value"
             >
-              <div class="comment-avatar">
-                <img
-                  :src="comment.metadata.userAvatar"
-                  :alt="comment.metadata.userName"
-                  class="avatar-img"
-                />
-              </div>
-              <div class="comment-content">
-                <div class="comment-header">
-                  <span class="comment-author">{{ comment.metadata.userName }}</span>
+              <div class="comment-item">
+                <div class="comment-avatar">
+                  <img
+                    :src="comment.metadata.userAvatar"
+                    :alt="comment.metadata.userName"
+                    class="avatar-img"
+                  />
                 </div>
-                <div class="comment-text">{{ comment.metadata.content }}</div>
-                <div class="comment-meta">
-                  <div class="meta-left">
-                    <span class="comment-time">{{ comment.metadata.createTimeFormat }}</span>
-                    <span class="comment-location" v-if="comment.metadata.ipLocation">{{
-                        comment.metadata.ipLocation
-                      }}</span>
+                <div class="comment-content">
+                  <div class="comment-header">
+                    <span class="comment-author">{{ comment.metadata.userName }}</span>
                   </div>
-                  <div class="meta-right">
-                    <div class="action-buttons">
-                      <button class="action-link report-btn">举报</button>
-                      <button class="action-link reply-btn" @click="replyToComment(comment)">回复</button>
-                      <button
-                        class="action-link like-btn"
-                        :class="{ liked: comment.metadata.liked }"
-                        @click="likeComment(comment)"
-                      >
-                        <FaIcon name="i-mdi:thumb-up" class="action-icon"/>
-                        <span>{{ comment.metadata.likeCount || 0 }}</span>
-                      </button>
+                  <div class="comment-text">{{ comment.metadata.content }}</div>
+                  <div class="comment-meta">
+                    <div class="meta-left">
+                      <span class="comment-time">{{ comment.metadata.createTimeFormat }}</span>
+                      <span class="comment-location" v-if="comment.metadata.ipLocation">{{
+                          comment.metadata.ipLocation
+                        }}</span>
+                    </div>
+                    <div class="meta-right">
+                      <div class="action-buttons">
+                        <button class="action-link report-btn">举报</button>
+                        <button class="action-link reply-btn" @click="replyToComment(comment)">回复</button>
+                        <button
+                          class="action-link like-btn"
+                          :class="{ liked: comment.metadata.liked }"
+                          @click="likeComment(comment)"
+                        >
+                          <FaIcon name="i-mdi:thumb-up" class="action-icon"/>
+                          <span>{{ comment.metadata.likeCount || 0 }}</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
+                <div class="floor-number">{{ comments.length - index }}楼</div>
               </div>
-              <div class="floor-number">{{ comments.length - index }}楼</div>
-              <!-- 回复输入框 - 参考图片样式 -->
-              <div v-if="replyComment && replyComment.id === comment.id" class="reply-form">
+
+              <!-- 回复输入框 - 移到评论项外面 -->
+              <div v-if="replyComment && replyComment.value === comment.value" class="reply-form">
                 <div class="reply-input-container">
                    <textarea
                      v-model="replyContent"
@@ -290,20 +274,16 @@ onMounted(() => {
                      class="reply-textarea"
                      rows="4"
                    ></textarea>
-                  <div class="reply-actions">
-                    <button
-                      class="submit-reply-btn"
-                      :disabled="!replyContent.trim()"
-                      @click="submitReply"
-                    >
-                      回复
-                    </button>
-                  </div>
+                  <button
+                    class="submit-reply-btn"
+                    :disabled="!replyContent.trim()"
+                    @click="submitReply"
+                  >
+                    回复
+                  </button>
                 </div>
               </div>
             </div>
-
-
           </div>
 
 
@@ -1041,6 +1021,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 12px;
+  margin-left: auto;
 }
 
 .comment-time {
@@ -1097,7 +1078,7 @@ onMounted(() => {
 
 /* 回复输入框样式 */
 .reply-form {
-  margin: 16px 0 0 0;
+  margin: 16px 0 0 52px;
   padding: 0;
   background: transparent;
   position: relative;
@@ -1106,40 +1087,40 @@ onMounted(() => {
 .reply-input-container {
   position: relative;
   width: 100%;
+  background: white;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .reply-textarea {
   width: 100%;
   padding: 16px 80px 16px 16px;
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
+  border: none;
+  border-radius: 0;
   font-size: 14px;
   line-height: 1.5;
-  resize: vertical;
-  min-height: 100px;
+  resize: none;
+  min-height: 120px;
   font-family: inherit;
   transition: all 0.3s ease;
-  background: white;
+  background: transparent;
   box-sizing: border-box;
+  outline: none;
 }
 
 .reply-textarea:focus {
   outline: none;
-  border-color: #409eff;
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
 }
 
 .reply-textarea::placeholder {
   color: #a0a8b0;
 }
 
-.reply-actions {
+.submit-reply-btn {
   position: absolute;
   bottom: 12px;
   right: 12px;
-}
-
-.submit-reply-btn {
   padding: 8px 20px;
   background: #8b5cf6;
   color: white;

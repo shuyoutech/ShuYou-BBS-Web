@@ -38,7 +38,6 @@ declare global {
   }
 
   interface Tree<T> {
-    id: string;
     parentId: string;
     label: string;
     value: string;
