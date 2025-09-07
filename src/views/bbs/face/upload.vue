@@ -7,6 +7,9 @@ import {fileUploadApi} from "@/api/system/file";
 import {postSaveApi} from "@/api/bbs/post";
 import type {PostSaveBo} from "@/api/bbs/post/types.ts";
 import {toast} from "vue-sonner";
+import type {GameVo} from "@/api/game/types.ts";
+import {gameHotListApi} from "@/api/game";
+import {dictOptionsApi} from "@/api/common";
 
 const router = useRouter()
 
@@ -40,6 +43,12 @@ const editorInit = ref({
 
 const formRef = useTemplateRef<FormInstance>('formRef')
 const formRules = ref<FormRules>({
+  gameId: [
+    {required: true, message: '请选择游戏', trigger: 'blur'},
+  ],
+  tag: [
+    {required: true, message: '请选择标签', trigger: 'blur'},
+  ],
   title: [
     {required: true, message: '请输入标题', trigger: 'blur'},
   ],
@@ -51,12 +60,15 @@ const formRules = ref<FormRules>({
   ]
 })
 const form = reactive({
+  gameId: '',
+  tag: '',
   title: '',
   content: '',
   coverImg: [],
 })
 
 const data = reactive<PostSaveBo>({
+  gameId: '',
   plate: '1',
   title: '',
   content: '',
@@ -66,6 +78,8 @@ const data = reactive<PostSaveBo>({
 const onSubmit = () => {
   formRef.value?.validate((valid) => {
     if (valid) {
+      data.gameId = form.gameId
+      data.tags = form.tag ? [form.tag] : []
       data.title = form.title
       data.content = form.content
       data.coverImgUrl = form.coverImg[0]
@@ -81,7 +95,25 @@ const goBack = () => {
   router.back()
 }
 
+// 加载游戏
+const gameList = ref<GameVo[]>();
+const loadGames = () => {
+  gameHotListApi().then(({data}) => {
+    gameList.value = data;
+  });
+}
+
+// 加载游戏标签
+const tags = ref<Options[]>();
+const loadFaceTags = () => {
+  dictOptionsApi("bbs_face_type").then(({data}) => {
+    tags.value = data;
+  })
+}
+
 onMounted(() => {
+  loadGames()
+  loadFaceTags()
 })
 </script>
 
@@ -103,6 +135,32 @@ onMounted(() => {
     <div class="main-content">
       <div class="form-container">
         <ElForm ref="formRef" :model="form" :rules="formRules">
+
+          <div class="form-section">
+            <ElFormItem label="游戏" prop="gameId">
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              <el-radio-group v-model="form.gameId">
+                <el-radio :label="game.gameName"
+                          v-for="game in gameList"
+                          :key="game.id"
+                          border></el-radio>
+              </el-radio-group>
+            </ElFormItem>
+          </div>
+
+          <div class="form-section">
+            <ElFormItem label="标签" prop="tag">
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              <div class="radio-container">
+                <el-radio-group v-model="form.tag">
+                  <el-radio-button :label="tag.label"
+                                   v-for="tag in tags"
+                                   :key="tag.value"
+                                   border></el-radio-button>
+                </el-radio-group>
+              </div>
+            </ElFormItem>
+          </div>
 
           <!-- 标题输入 -->
           <div class="form-section">
@@ -147,11 +205,11 @@ onMounted(() => {
               </div>
             </ElFormItem>
           </div>
-         </ElForm>
-         <div class="submit-button-container">
-           <button class="btn btn-primary" @click="onSubmit">发布帖子</button>
-         </div>
-       </div>
+        </ElForm>
+        <div class="submit-button-container">
+          <button class="btn btn-primary" @click="onSubmit">发布帖子</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -256,6 +314,11 @@ onMounted(() => {
 
 .form-section:last-child {
   margin-bottom: 0;
+}
+
+.radio-container {
+  display: flex; /* 使用 Flexbox */
+  gap: 20px; /* 设置元素之间的间距 */
 }
 
 .form-label {

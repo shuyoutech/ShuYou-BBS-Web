@@ -48,6 +48,7 @@ export interface PostVo {
  * 帖子新增对象
  */
 export interface PostSaveBo {
+  gameId: string;          //游戏ID
   plate: string;           //帖子板块
   title: string;           //帖子标题
   content: string;         //帖子内容
