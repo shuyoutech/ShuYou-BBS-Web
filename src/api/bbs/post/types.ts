@@ -4,6 +4,7 @@
 export interface PostQuery {
   status?: string;//帖子状态
   plate?: string; //帖子板块
+  title?: string; //帖子标题
 }
 
 /**
@@ -12,8 +13,11 @@ export interface PostQuery {
 export interface PostVo {
   id: string;             //帖子ID
   createTime: string;     //创建时间
+  createTimeFormat: string//时间格式化
   status: string;         //帖子状态
   userId: string;         //发帖用户ID
+  userName: string;       //用户名称
+  userAvatar: string;     //用户头像
   plate: string;          //帖子板块
   category: string;       //帖子分类
   tags: string[];         //标签集合
@@ -23,6 +27,7 @@ export interface PostVo {
   coverImgUrl: string;    //封面图片URL
   viewCount: number;      //浏览次数
   likeCount: number;      //点赞次数
+  liked: boolean;         //是否点赞过
   commentCount: number;   //评论次数
   dislikeCount: number;   //点踩次数
   favoriteCount: number;  //收藏次数

@@ -1,3 +1,132 @@
+<script setup lang="ts">
+import {ref, onMounted} from 'vue'
+import {useRouter} from 'vue-router'
+import {ElMessage} from 'element-plus'
+import {gameHotListApi} from "@/api/game";
+import type {GameVo} from "@/api/game/types.ts";
+import {dictOptionsApi} from "@/api/common";
+import {postPageApi} from "@/api/bbs/post";
+import type {PostQuery, PostVo} from "@/api/bbs/post/types.ts";
+
+const router = useRouter()
+
+// 响应式数据
+const searchQuery = ref('')
+const sortBy = ref('latest')
+
+// 分页相关
+const currentPage = ref(1)
+const pageSize = ref(12)
+const totalWorks = ref(0)
+
+// 游戏选择相关
+const selectedGames = ref<string[]>([])
+// 标签选择相关
+const selectedTypes = ref<string[]>([])
+// 捏脸列表数据
+const faceList = reactive<PostVo[]>([]);
+
+const postQuery = reactive<PageQuery<PostQuery>>({
+  pageNum: 1,
+  pageSize: 15,
+  sort: 'createTime',
+  order: 'desc',
+  query: {}
+})
+
+const viewWork = (_work: any) => {
+
+}
+
+const likeWork = (work: any) => {
+  work.isLiked = !work.isLiked
+  if (work.isLiked) {
+    work.likes++
+    ElMessage.success('已添加到喜欢列表')
+  } else {
+    work.likes--
+    ElMessage.info('已取消喜欢')
+  }
+}
+
+
+const handleSizeChange = (size: number) => {
+  pageSize.value = size
+  currentPage.value = 1 // 重置到第一页
+}
+
+const handleCurrentChange = (page: number) => {
+  currentPage.value = page
+}
+
+const formatNumber = (num: number) => {
+  if (num >= 10000) {
+    return (num / 10000).toFixed(1) + 'w'
+  } else if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'k'
+  }
+  return num.toString()
+}
+
+const goToUpload = () => {
+  router.push('/face-upload')
+}
+
+// 游戏选择相关方法
+const toggleGame = (gameId: string) => {
+  const index = selectedGames.value.indexOf(gameId)
+  if (index > -1) {
+    selectedGames.value.splice(index, 1)
+  } else {
+    selectedGames.value.push(gameId)
+  }
+}
+
+// 标签选择相关方法
+const toggleType = (value: string) => {
+  const index = selectedTypes.value.indexOf(value)
+  if (index > -1) {
+    selectedTypes.value.splice(index, 1)
+  } else {
+    selectedTypes.value.push(value)
+  }
+}
+
+// 加载游戏
+const gameList = ref<GameVo[]>();
+const loadGames = () => {
+  gameHotListApi().then(({data}) => {
+    gameList.value = data;
+  });
+}
+
+// 加载游戏标签
+const typeList = ref<Options[]>();
+const loadFaceTypes = () => {
+  dictOptionsApi("bbs_face_type").then(({data}) => {
+    typeList.value = data;
+  })
+}
+
+// 方法
+const handleSearch = () => {
+  postQuery.query.plate = '1'
+  postQuery.query.title = searchQuery.value
+  postPageApi(postQuery).then(({data}) => {
+    console.log(JSON.stringify(data));
+    Object.assign(faceList, data.rows)
+  });
+}
+
+
+onMounted(() => {
+  loadGames()
+  loadFaceTypes()
+  handleSearch()
+})
+</script>
+
+
 <template>
   <div class="face-design-container">
     <!-- 筛选和搜索区域 -->
@@ -77,38 +206,38 @@
     <!-- 主要内容区域 -->
     <div class="main-content">
       <div class="content-wrapper">
-        <!-- 左侧内容区 -->
-        <div class="content-left">
+        <!-- 内容区 -->
+        <div class="content-main">
           <!-- 作品网格 -->
           <div class="works-grid">
             <div
-              v-for="work in filteredWorks"
-              :key="work.id"
+              v-for="face in faceList"
+              :key="face.id"
               class="work-card"
-              @click="viewWork(work)"
+              @click="viewWork(face)"
             >
               <div class="work-image">
-                <img :src="work.coverImage" :alt="work.title" class="cover-img"/>
+                <img :src="face.coverImgUrl" :alt="face.title" class="cover-img"/>
                 <div class="work-overlay">
                 </div>
               </div>
               <div class="work-info">
-                <h3 class="work-title">{{ work.title }}</h3>
+                <h3 class="work-title">{{ face.title }}</h3>
                 <div class="work-meta">
                   <div class="author-info">
-                    <img :src="work.author.avatar" :alt="work.author.name" class="author-avatar"/>
-                    <span class="author-name">{{ work.author.name }}</span>
+                    <img :src="face.userAvatar" :alt="face.userName" class="author-avatar"/>
+                    <span class="author-name">{{ face.userName }}</span>
                     <div class="work-location">
                       <FaIcon name="i-mdi:map-marker" class="location-icon"/>
-                      <span class="location-text">{{ work.location }}</span>
+                      <span class="location-text">{{ face.ipLocation }}</span>
                     </div>
                   </div>
-                  <span class="work-date">{{ formatDate(work.createTime) }}</span>
+                  <span class="work-date">{{ face.createTimeFormat }}</span>
                 </div>
                 <div class="work-tags-row">
                   <div class="work-tags">
                     <span
-                      v-for="tag in work.tags.slice(0, 3)"
+                      v-for="tag in face.tags"
                       :key="tag"
                       class="work-tag"
                     >
@@ -119,15 +248,11 @@
                   <div class="work-stats-display">
                     <div class="stats-item views">
                       <FaIcon name="i-mdi:eye" class="stats-icon"/>
-                      <span class="stats-number">{{ formatNumber(work.views) }}</span>
+                      <span class="stats-number">{{ formatNumber(face.viewCount) }}</span>
                     </div>
-                    <div class="stats-item likes clickable" @click.stop="likeWork(work)">
-                      <FaIcon name="i-mdi:heart" :class="['stats-icon', { liked: work.isLiked }]"/>
-                      <span class="stats-number">{{ formatNumber(work.likes) }}</span>
-                    </div>
-                    <div class="stats-item downloads">
-                      <FaIcon name="i-mdi:download" class="stats-icon"/>
-                      <span class="stats-number">{{ formatNumber(work.downloads) }}</span>
+                    <div class="stats-item likes clickable" @click.stop="likeWork(face)">
+                      <FaIcon name="i-mdi:heart" :class="['stats-icon', { liked: face.liked }]"/>
+                      <span class="stats-number">{{ formatNumber(face.likeCount) }}</span>
                     </div>
                   </div>
                 </div>
@@ -149,619 +274,10 @@
             />
           </div>
         </div>
-
-        <!-- 右侧边栏 -->
-        <div class="sidebar-right">
-          <!-- 热门标签 -->
-          <div class="sidebar-section">
-            <h3>热门标签</h3>
-            <div class="tag-cloud">
-              <span
-                v-for="tag in popularTags"
-                :key="tag.name"
-                class="tag-item"
-                :style="{ fontSize: `${tag.size}px` }"
-                @click="filterByTag(tag.name)"
-              >
-                {{ tag.name }}
-              </span>
-            </div>
-          </div>
-
-          <!-- 热门作者 -->
-          <div class="sidebar-section">
-            <h3>热门作者</h3>
-            <div class="author-list">
-              <div
-                v-for="author in popularAuthors"
-                :key="author.id"
-                class="author-item"
-                @click="viewAuthor(author)"
-              >
-                <img :src="author.avatar" :alt="author.name" class="author-avatar-small"/>
-                <div class="author-details">
-                  <span class="author-name-small">{{ author.name }}</span>
-                  <span class="author-works">{{ author.worksCount }} 作品</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 最新评论 -->
-          <div class="sidebar-section">
-            <h3>最新评论</h3>
-            <div class="comment-list">
-              <div
-                v-for="comment in recentComments"
-                :key="comment.id"
-                class="comment-item"
-              >
-                <div class="comment-content">{{ comment.content }}</div>
-                <div class="comment-meta">
-                  <span class="comment-author">{{ comment.author }}</span>
-                  <span class="comment-time">{{ formatDate(comment.createTime) }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 作品详情弹窗 -->
-    <div v-if="selectedWork" class="work-modal" @click="closeModal">
-      <div class="modal-content" @click.stop>
-        <button class="close-btn" @click="closeModal">
-          <FaIcon name="i-mdi:close"/>
-        </button>
-        <div class="modal-body">
-          <div class="modal-image">
-            <img :src="selectedWork.coverImage" :alt="selectedWork.title" class="modal-img"/>
-          </div>
-          <div class="modal-info">
-            <h2 class="modal-title">{{ selectedWork.title }}</h2>
-            <div class="modal-author">
-              <img :src="selectedWork.author.avatar" :alt="selectedWork.author.name" class="modal-author-avatar"/>
-              <div class="modal-author-info">
-                <span class="modal-author-name">{{ selectedWork.author.name }}</span>
-                <span class="modal-author-level">{{ selectedWork.author.level }}</span>
-              </div>
-            </div>
-            <div class="modal-description">
-              {{ selectedWork.description }}
-            </div>
-            <div class="modal-stats">
-              <div class="stat-item">
-                <FaIcon name="i-mdi:eye"/>
-                <span>{{ selectedWork.views }} 浏览</span>
-              </div>
-              <div class="stat-item">
-                <FaIcon name="i-mdi:heart"/>
-                <span>{{ selectedWork.likes }} 喜欢</span>
-              </div>
-              <div class="stat-item">
-                <FaIcon name="i-mdi:download"/>
-                <span>{{ selectedWork.downloads }} 下载</span>
-              </div>
-            </div>
-            <div class="modal-actions">
-              <button class="btn btn-primary" @click="downloadWork(selectedWork)">
-                <FaIcon name="i-mdi:download"/>
-                下载捏脸文件
-              </button>
-              <button class="btn btn-secondary" @click="likeWork(selectedWork)">
-                <FaIcon name="i-mdi:heart" :class="{ liked: selectedWork.isLiked }"/>
-                {{ selectedWork.isLiked ? '已喜欢' : '喜欢' }}
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import {ref, computed, onMounted} from 'vue'
-import {useRouter} from 'vue-router'
-import {ElMessage} from 'element-plus'
-import {gameHotListApi} from "@/api/game";
-import type {GameVo} from "@/api/game/types.ts";
-import {dictOptionsApi} from "@/api/common";
-
-const router = useRouter()
-
-// 响应式数据
-const searchQuery = ref('')
-const currentFilter = ref('all')
-const sortBy = ref('latest')
-
-const selectedWork = ref<any>(null)
-
-// 分页相关
-const currentPage = ref(1)
-const pageSize = ref(12)
-const totalWorks = ref(0)
-
-// 游戏选择相关
-const selectedGames = ref<string[]>([])
-// 标签选择相关
-const selectedTypes = ref<string[]>([])
-
-// 模拟作品数据
-const works = ref([
-  {
-    id: '1',
-    title: '精灵公主 - 月光下的守护者',
-    description: '一个充满神秘色彩的精灵角色，银发如月光般闪耀，眼神深邃而温柔。',
-    coverImage: 'https://picsum.photos/300/400?random=1',
-    author: {
-      id: '1',
-      name: '设计师小王',
-      avatar: 'https://picsum.photos/50/50?random=10',
-      level: '高级设计师'
-    },
-    views: 1256,
-    likes: 89,
-    downloads: 234,
-    isLiked: false,
-    tags: ['精灵', '女性', '奇幻', '银发'],
-    category: 'female',
-    game: 'lost-ark',
-    location: '北京·朝阳区',
-    createTime: new Date().toISOString()
-  },
-  {
-    id: '2',
-    title: '暗黑骑士 - 深渊的守护者',
-    description: '一个来自深渊的暗黑骑士，全身被黑色铠甲覆盖，散发着强大的黑暗力量。',
-    coverImage: 'https://picsum.photos/300/400?random=2',
-    author: {
-      id: '2',
-      name: '创意大师',
-      avatar: 'https://picsum.photos/50/50?random=11',
-      level: '大师级'
-    },
-    views: 2156,
-    likes: 156,
-    downloads: 445,
-    isLiked: true,
-    tags: ['骑士', '男性', '暗黑', '铠甲'],
-    category: 'male',
-    game: 'genshin',
-    location: '上海·浦东新区',
-    createTime: new Date(Date.now() - 3600000).toISOString()
-  },
-  {
-    id: '3',
-    title: '魔法少女 - 星光守护者',
-    description: '一个可爱的魔法少女，拥有粉色的长发和闪亮的魔法棒，充满青春活力。',
-    coverImage: 'https://picsum.photos/300/400?random=3',
-    author: {
-      id: '3',
-      name: '动漫达人',
-      avatar: 'https://picsum.photos/50/50?random=12',
-      level: '中级设计师'
-    },
-    views: 3456,
-    likes: 267,
-    downloads: 678,
-    isLiked: false,
-    tags: ['魔法少女', '女性', '动漫', '粉色'],
-    category: 'female',
-    game: 'honkai',
-    location: '广州·天河区',
-    createTime: new Date(Date.now() - 7200000).toISOString()
-  },
-  {
-    id: '4',
-    title: '龙族战士 - 火焰之怒',
-    description: '一个拥有龙族血统的战士，能够操控火焰，拥有强大的战斗能力。',
-    coverImage: 'https://picsum.photos/300/400?random=4',
-    author: {
-      id: '4',
-      name: '龙族专家',
-      avatar: 'https://picsum.photos/50/50?random=13',
-      level: '高级设计师'
-    },
-    views: 1890,
-    likes: 134,
-    downloads: 289,
-    isLiked: false,
-    tags: ['龙族', '男性', '火焰', '战士'],
-    category: 'male',
-    game: 'wow',
-    location: '深圳·南山区',
-    createTime: new Date(Date.now() - 10800000).toISOString()
-  },
-  {
-    id: '5',
-    title: '森林精灵 - 自然之灵',
-    description: '一个与自然和谐共生的森林精灵，拥有绿色的头发和自然的力量。',
-    coverImage: 'https://picsum.photos/300/400?random=5',
-    author: {
-      id: '5',
-      name: '自然艺术家',
-      avatar: 'https://picsum.photos/50/50?random=14',
-      level: '中级设计师'
-    },
-    views: 987,
-    likes: 78,
-    downloads: 156,
-    isLiked: true,
-    tags: ['精灵', '女性', '自然', '绿色'],
-    category: 'female',
-    game: 'ffxiv',
-    location: '杭州·西湖区',
-    createTime: new Date(Date.now() - 14400000).toISOString()
-  },
-  {
-    id: '6',
-    title: '机械战士 - 未来守护者',
-    description: '一个来自未来的机械战士，拥有高科技装备和强大的战斗能力。',
-    coverImage: 'https://picsum.photos/300/400?random=6',
-    author: {
-      id: '6',
-      name: '科幻大师',
-      avatar: 'https://picsum.photos/50/50?random=15',
-      level: '大师级'
-    },
-    views: 2789,
-    likes: 198,
-    downloads: 456,
-    isLiked: false,
-    tags: ['机械', '男性', '科幻', '未来'],
-    category: 'male',
-    game: 'black-desert',
-    location: '成都·锦江区',
-    createTime: new Date(Date.now() - 18000000).toISOString()
-  },
-  {
-    id: '7',
-    title: '天使守护者 - 圣光之翼',
-    description: '一个拥有圣光力量的天使角色，洁白的羽翼散发着神圣的光芒。',
-    coverImage: 'https://picsum.photos/300/400?random=7',
-    author: {
-      id: '7',
-      name: '神圣艺术家',
-      avatar: 'https://picsum.photos/50/50?random=16',
-      level: '高级设计师'
-    },
-    views: 1567,
-    likes: 123,
-    downloads: 234,
-    isLiked: false,
-    tags: ['天使', '女性', '神圣', '白色'],
-    category: 'female',
-    game: 'genshin',
-    location: '南京·鼓楼区',
-    createTime: new Date(Date.now() - 21600000).toISOString()
-  },
-  {
-    id: '8',
-    title: '恶魔领主 - 暗影之王',
-    description: '一个强大的恶魔领主，掌控着暗影和火焰的力量。',
-    coverImage: 'https://picsum.photos/300/400?random=8',
-    author: {
-      id: '8',
-      name: '暗黑设计师',
-      avatar: 'https://picsum.photos/50/50?random=17',
-      level: '中级设计师'
-    },
-    views: 2345,
-    likes: 167,
-    downloads: 345,
-    isLiked: true,
-    tags: ['恶魔', '男性', '暗黑', '火焰'],
-    category: 'male',
-    game: 'wow',
-    location: '武汉·江汉区',
-    createTime: new Date(Date.now() - 25200000).toISOString()
-  },
-  {
-    id: '9',
-    title: '花仙子 - 春之精灵',
-    description: '一个充满生机的花仙子，身边环绕着美丽的花朵和蝴蝶。',
-    coverImage: 'https://picsum.photos/300/400?random=9',
-    author: {
-      id: '9',
-      name: '自然之友',
-      avatar: 'https://picsum.photos/50/50?random=18',
-      level: '新手设计师'
-    },
-    views: 987,
-    likes: 89,
-    downloads: 156,
-    isLiked: false,
-    tags: ['花仙子', '女性', '自然', '花朵'],
-    category: 'female',
-    game: 'honkai',
-    location: '西安·雁塔区',
-    createTime: new Date(Date.now() - 28800000).toISOString()
-  },
-  {
-    id: '10',
-    title: '冰霜法师 - 寒冰掌控者',
-    description: '一个精通冰霜魔法的法师，能够操控冰雪和寒冰的力量。',
-    coverImage: 'https://picsum.photos/300/400?random=10',
-    author: {
-      id: '10',
-      name: '冰霜专家',
-      avatar: 'https://picsum.photos/50/50?random=19',
-      level: '高级设计师'
-    },
-    views: 1876,
-    likes: 145,
-    downloads: 267,
-    isLiked: false,
-    tags: ['法师', '男性', '冰霜', '魔法'],
-    category: 'male',
-    game: 'ffxiv',
-    location: '重庆·渝中区',
-    createTime: new Date(Date.now() - 32400000).toISOString()
-  },
-  {
-    id: '11',
-    title: '猫娘女仆 - 可爱萌宠',
-    description: '一个可爱的猫娘女仆，拥有猫耳朵和尾巴，充满萌系魅力。',
-    coverImage: 'https://picsum.photos/300/400?random=11',
-    author: {
-      id: '11',
-      name: '萌系大师',
-      avatar: 'https://picsum.photos/50/50?random=20',
-      level: '中级设计师'
-    },
-    views: 3456,
-    likes: 289,
-    downloads: 456,
-    isLiked: true,
-    tags: ['猫娘', '女性', '萌系', '女仆'],
-    category: 'female',
-    game: 'lost-ark',
-    location: '天津·和平区',
-    createTime: new Date(Date.now() - 36000000).toISOString()
-  },
-  {
-    id: '12',
-    title: '武士刀客 - 剑道大师',
-    description: '一个精通剑道的武士，拥有精湛的剑术和武士精神。',
-    coverImage: 'https://picsum.photos/300/400?random=12',
-    author: {
-      id: '12',
-      name: '剑道宗师',
-      avatar: 'https://picsum.photos/50/50?random=21',
-      level: '大师级'
-    },
-    views: 2134,
-    likes: 178,
-    downloads: 312,
-    isLiked: false,
-    tags: ['武士', '男性', '剑道', '东方'],
-    category: 'male',
-    game: 'bdo',
-    location: '苏州·姑苏区',
-    createTime: new Date(Date.now() - 39600000).toISOString()
-  }
-])
-
-// 热门标签
-const popularTags = ref([
-  {name: '精灵', size: 16},
-  {name: '女性', size: 14},
-  {name: '男性', size: 14},
-  {name: '奇幻', size: 12},
-  {name: '动漫', size: 12},
-  {name: '暗黑', size: 10},
-  {name: '魔法', size: 10},
-  {name: '战士', size: 8},
-  {name: '自然', size: 8}
-])
-
-// 热门作者
-const popularAuthors = ref([
-  {
-    id: '1',
-    name: '设计师小王',
-    avatar: 'https://picsum.photos/50/50?random=10',
-    worksCount: 15
-  },
-  {
-    id: '2',
-    name: '创意大师',
-    avatar: 'https://picsum.photos/50/50?random=11',
-    worksCount: 23
-  },
-  {
-    id: '3',
-    name: '动漫达人',
-    avatar: 'https://picsum.photos/50/50?random=12',
-    worksCount: 18
-  }
-])
-
-// 最新评论
-const recentComments = ref([
-  {
-    id: '1',
-    content: '这个精灵角色设计得太美了！',
-    author: '用户A',
-    createTime: new Date().toISOString()
-  },
-  {
-    id: '2',
-    content: '暗黑骑士的细节处理很棒',
-    author: '用户B',
-    createTime: new Date(Date.now() - 1800000).toISOString()
-  },
-  {
-    id: '3',
-    content: '魔法少女很可爱，下载了！',
-    author: '用户C',
-    createTime: new Date(Date.now() - 3600000).toISOString()
-  }
-])
-
-// 计算属性
-const filteredWorks = computed(() => {
-  let result = works.value
-
-  // 搜索过滤
-  if (searchQuery.value) {
-    result = result.filter(work =>
-      work.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      work.tags.some(tag => tag.toLowerCase().includes(searchQuery.value.toLowerCase()))
-    )
-  }
-
-  // 分类过滤
-  if (currentFilter.value !== 'all') {
-    result = result.filter(work => work.category === currentFilter.value)
-  }
-
-  // 游戏过滤
-  if (selectedGames.value.length > 0) {
-    result = result.filter(work => selectedGames.value.includes(work.game))
-  }
-
-  // 排序
-  switch (sortBy.value) {
-    case 'latest':
-      result = result.sort((a, b) => new Date(b.createTime).getTime() - new Date(a.createTime).getTime())
-      break
-    case 'popular':
-      result = result.sort((a, b) => b.likes - a.likes)
-      break
-    case 'downloads':
-      result = result.sort((a, b) => b.downloads - a.downloads)
-      break
-    case 'rating':
-      result = result.sort((a, b) => b.views - a.views)
-      break
-  }
-
-  // 更新总数
-  totalWorks.value = result.length
-
-  // 分页
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return result.slice(start, end)
-})
-
-// 方法
-const handleSearch = () => {
-  // 搜索逻辑已在计算属性中处理
-}
-
-const filterByTag = (tagName: string) => {
-  searchQuery.value = tagName
-}
-
-const viewWork = (work: any) => {
-  selectedWork.value = work
-}
-
-const closeModal = () => {
-  selectedWork.value = null
-}
-
-const downloadWork = (work: any) => {
-  ElMessage.success(`开始下载 ${work.title}`)
-  // 这里可以添加实际的下载逻辑
-}
-
-const likeWork = (work: any) => {
-  work.isLiked = !work.isLiked
-  if (work.isLiked) {
-    work.likes++
-    ElMessage.success('已添加到喜欢列表')
-  } else {
-    work.likes--
-    ElMessage.info('已取消喜欢')
-  }
-}
-
-const viewAuthor = (author: any) => {
-  ElMessage.info(`查看作者 ${author.name} 的作品`)
-  // 这里可以跳转到作者页面
-}
-
-const handleSizeChange = (size: number) => {
-  pageSize.value = size
-  currentPage.value = 1 // 重置到第一页
-}
-
-const handleCurrentChange = (page: number) => {
-  currentPage.value = page
-}
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-
-  if (diff < 60000) return '刚刚'
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
-  if (diff < 2592000000) return `${Math.floor(diff / 86400000)}天前`
-
-  return date.toLocaleDateString()
-}
-
-const formatNumber = (num: number) => {
-  if (num >= 10000) {
-    return (num / 10000).toFixed(1) + 'w'
-  } else if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'k'
-  }
-  return num.toString()
-}
-
-const goToUpload = () => {
-  router.push('/face-upload')
-}
-
-// 游戏选择相关方法
-const toggleGame = (gameId: string) => {
-  const index = selectedGames.value.indexOf(gameId)
-  if (index > -1) {
-    selectedGames.value.splice(index, 1)
-  } else {
-    selectedGames.value.push(gameId)
-  }
-}
-
-// 标签选择相关方法
-const toggleType = (value: string) => {
-  const index = selectedTypes.value.indexOf(value)
-  if (index > -1) {
-    selectedTypes.value.splice(index, 1)
-  } else {
-    selectedTypes.value.push(value)
-  }
-}
-
-// 加载游戏
-const gameList = ref<GameVo[]>();
-const loadGames = () => {
-  gameHotListApi().then(({data}) => {
-    gameList.value = data;
-  });
-}
-
-// 加载游戏标签
-const typeList = ref<Options[]>();
-const loadFaceTypes = () => {
-  dictOptionsApi("bbs_face_type").then(({data}) => {
-    typeList.value = data;
-  })
-}
-
-onMounted(() => {
-  loadGames();
-  loadFaceTypes();
-})
-</script>
 
 <style scoped>
 .face-design-container {
@@ -1109,12 +625,10 @@ onMounted(() => {
 }
 
 .content-wrapper {
-  display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 20px;
+  display: block;
 }
 
-.content-left {
+.content-main {
   background: white;
   border-radius: 12px;
   padding: 20px;
@@ -1123,7 +637,7 @@ onMounted(() => {
 
 .works-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
   margin-bottom: 30px;
 }
@@ -1453,120 +967,6 @@ onMounted(() => {
   padding: 20px 0;
 }
 
-.sidebar-right {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.sidebar-section {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.sidebar-section h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 16px 0;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #f0f9ff;
-}
-
-.tag-cloud {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.tag-item {
-  padding: 4px 12px;
-  background: #f8f9fa;
-  color: #666;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid #e9ecef;
-}
-
-.tag-item:hover {
-  background: #409eff;
-  color: white;
-  border-color: #409eff;
-}
-
-.author-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.author-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.author-item:hover {
-  background: #f8f9fa;
-}
-
-.author-avatar-small {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.author-details {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.author-name-small {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-}
-
-.author-works {
-  font-size: 12px;
-  color: #666;
-}
-
-.comment-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.comment-item {
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border-left: 3px solid #409eff;
-}
-
-.comment-content {
-  font-size: 14px;
-  color: #333;
-  line-height: 1.4;
-  margin-bottom: 8px;
-}
-
-.comment-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: #666;
-}
 
 .work-modal {
   position: fixed;
@@ -1767,7 +1167,7 @@ onMounted(() => {
   }
 
   .content-wrapper {
-    grid-template-columns: 1fr;
+    display: block;
   }
 
   .header-content {
@@ -1829,7 +1229,7 @@ onMounted(() => {
   }
 
   .works-grid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 16px;
   }
 

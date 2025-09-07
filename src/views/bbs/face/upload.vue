@@ -7,7 +7,6 @@ import {fileUploadApi} from "@/api/system/file";
 import {postSaveApi} from "@/api/bbs/post";
 import type {PostSaveBo} from "@/api/bbs/post/types.ts";
 import {toast} from "vue-sonner";
-import {dictOptionsApi} from "@/api/common";
 
 const router = useRouter()
 
@@ -66,14 +65,13 @@ const data = reactive<PostSaveBo>({
 
 const onSubmit = () => {
   formRef.value?.validate((valid) => {
-    alert(valid)
     if (valid) {
       data.title = form.title
       data.content = form.content
       data.coverImgUrl = form.coverImg[0]
-      alert(JSON.stringify(data))
       postSaveApi(data).then(() => {
         toast.success('发布成功')
+        router.push('/')
       })
     }
   })
@@ -103,12 +101,19 @@ onMounted(() => {
     </div>
     <!-- 主要内容区域 -->
     <div class="main-content">
-      <ElForm ref="formRef" :model="form" :rules="formRules">
-        <div class="form-container">
+      <div class="form-container">
+        <ElForm ref="formRef" :model="form" :rules="formRules">
+
           <!-- 标题输入 -->
           <div class="form-section">
             <ElFormItem label="标题" prop="title">
-              <ElInput v-model="form.title" maxlength="30" placeholder="填写合适标题可以获得更多曝光哦"/>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              <textarea
+                v-model="form.title"
+                maxlength="30"
+                class="title-textarea"
+                placeholder="请输入标题"
+              />
             </ElFormItem>
           </div>
 
@@ -123,9 +128,9 @@ onMounted(() => {
                 <FaImageUpload
                   v-model="form.coverImg"
                   action="/file/upload"
-                  :width="524"
-                  :height="446"
-                  :dimension="{width: 524, height: 446}"
+                  :width="500"
+                  :height="400"
+                  :dimension="{width: 500, height: 400}"
                   :ext="['jpg', 'png', 'gif', 'bmp']"
                   :after-upload="(response) => response.fileUrl"
                 />
@@ -136,22 +141,17 @@ onMounted(() => {
           <!-- 内容编辑器 -->
           <div class="form-section">
             <ElFormItem label="内容" prop="content">
-              <FaPageMain>
-                <div class="min-w-full prose">
-                  <TinyMCE api-key="yaqateu3ygrcimjd5431nbkeun90laoifukj05jn1utl7g3g" v-model="form.content"
-                           :init="editorInit"/>
-                </div>
-              </FaPageMain>
+              <div class="content-editor-wrapper">
+                <TinyMCE api-key="yaqateu3ygrcimjd5431nbkeun90laoifukj05jn1utl7g3g" v-model="form.content"
+                         :init="editorInit"/>
+              </div>
             </ElFormItem>
           </div>
-        </div>
-      </ElForm>
-      <!-- 发布按钮 -->
-      <div class="form-actions">
-        <button class="btn btn-primary" @click="onSubmit">
-          发布帖子
-        </button>
-      </div>
+         </ElForm>
+         <div class="submit-button-container">
+           <button class="btn btn-primary" @click="onSubmit">发布帖子</button>
+         </div>
+       </div>
     </div>
   </div>
 </template>
@@ -160,11 +160,25 @@ onMounted(() => {
 <style scoped>
 .face-upload-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  position: relative;
+}
+
+.face-upload-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+  opacity: 0.3;
+  pointer-events: none;
 }
 
 .page-header {
   background: white;
+  border-bottom: 1px solid #e4e7ed;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
@@ -178,7 +192,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 60px;
+  height: 80px;
 }
 
 .header-left {
@@ -201,13 +215,16 @@ onMounted(() => {
 
 .header-actions {
   display: flex;
-  gap: 12px;
+  gap: 16px;
+  align-items: center;
 }
 
 .main-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 30px 20px;
+  position: relative;
+  z-index: 1;
 }
 
 .form-container {
@@ -215,10 +232,30 @@ onMounted(() => {
   border-radius: 12px;
   padding: 30px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.form-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c);
+  border-radius: 12px 12px 0 0;
 }
 
 .form-section {
-  margin-bottom: 30px;
+  margin-bottom: 35px;
+  position: relative;
+}
+
+.form-section:last-child {
+  margin-bottom: 0;
 }
 
 .form-label {
@@ -226,7 +263,78 @@ onMounted(() => {
   font-size: 16px;
   font-weight: 600;
   color: #333;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
+}
+
+.title-input {
+  max-width: 600px;
+}
+
+.title-input :deep(.el-input__wrapper) {
+  height: 48px;
+  border-radius: 8px;
+  box-shadow: none;
+  border: none;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.title-input :deep(.el-input__wrapper:hover) {
+  box-shadow: none;
+  border: none;
+}
+
+.title-input :deep(.el-input__wrapper.is-focus) {
+  box-shadow: none;
+  border: none;
+}
+
+.title-input :deep(.el-input__inner) {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.title-input :deep(.el-input__inner:focus) {
+  box-shadow: none;
+  border: none;
+}
+
+.title-textarea {
+  width: 100%;
+  max-width: 600px;
+  height: 60px;
+  border: 1px solid #dcdfe6;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 16px;
+  font-family: inherit;
+  resize: none;
+  outline: none;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.title-textarea:hover {
+  border-color: #c0c4cc;
+}
+
+.title-textarea:focus {
+  border-color: #409eff;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+}
+
+.title-textarea::placeholder {
+  color: #c0c4cc;
+  font-size: 14px;
+}
+
+.content-editor-wrapper {
+  border: 1px solid #dcdfe6;
+  border-radius: 8px;
+  background: white;
 }
 
 .title-input-wrapper {
@@ -422,17 +530,32 @@ onMounted(() => {
 }
 
 .upload-instructions {
-  background: #f8f9fa;
-  padding: 16px;
-  border-radius: 8px;
-  border-left: 4px solid #67c23a;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.upload-instructions::before {
+  content: '💡';
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  font-size: 18px;
 }
 
 .upload-instructions p {
-  margin: 0 0 8px 0;
+  margin: 0 0 10px 0;
   color: #606266;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
+  padding-left: 30px;
+}
+
+.upload-instructions p:last-child {
+  margin-bottom: 0;
 }
 
 .cover-upload-area {
@@ -502,12 +625,22 @@ onMounted(() => {
   transform: scale(1.1);
 }
 
+.submit-button-container {
+  display: flex;
+  justify-content: center;
+  padding: 25px 0;
+  margin-top: 15px;
+  border-top: 1px solid rgba(220, 223, 230, 0.3);
+}
+
+
 .form-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: 16px;
-  padding-top: 20px;
-  border-top: 1px solid #e4e7ed;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px 0;
+  margin-top: 20px;
+  border-top: 1px solid rgba(220, 223, 230, 0.3);
 }
 
 .btn {
@@ -524,14 +657,37 @@ onMounted(() => {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #409eff, #337ecc);
+  background: linear-gradient(135deg, #409eff 0%, #337ecc 100%);
   color: white;
   box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+  min-width: 150px;
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-primary:hover::before {
+  left: 100%;
 }
 
 .btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(64, 158, 255, 0.4);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
 }
 
 .btn-primary:disabled {
@@ -544,12 +700,18 @@ onMounted(() => {
 .btn-secondary {
   background: white;
   color: #606266;
-  border: 2px solid #dcdfe6;
+  border: 1px solid #dcdfe6;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 6px;
+  min-width: 80px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .btn-secondary:hover {
-  background: #f5f7fa;
-  border-color: #c0c4cc;
+  border-color: #409eff;
+  color: #409eff;
 }
 
 .error-message {

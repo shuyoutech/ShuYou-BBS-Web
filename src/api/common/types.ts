@@ -15,7 +15,7 @@ declare global {
    * 分页响应对象
    */
   interface PageResult<T> {
-    list: T;
+    rows: T[];
     total: number;
   }
 
