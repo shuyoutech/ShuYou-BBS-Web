@@ -85,7 +85,7 @@ const onSubmit = () => {
       data.coverImgUrl = form.coverImg[0]
       postSaveApi(data).then(() => {
         toast.success('发布成功')
-        router.push('/')
+        router.push('/face')
       })
     }
   })
@@ -149,14 +149,15 @@ onMounted(() => {
           </div>
 
           <div class="form-section">
-            <ElFormItem label="标签" prop="tag">
+            <ElFormItem label="标签" prop="tags">
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
               <div class="radio-container">
                 <el-checkbox-group v-model="form.tags">
                   <el-checkbox-button :label="tag.label"
-                                   v-for="tag in tags"
-                                   :key="tag.value"
-                                   border></el-checkbox-button>
+                                      v-for="tag in tags"
+                                      :key="tag.value"
+                                      :value="tag.value"
+                                      border></el-checkbox-button>
                 </el-checkbox-group>
               </div>
             </ElFormItem>
@@ -168,7 +169,6 @@ onMounted(() => {
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
               <textarea
                 v-model="form.title"
-                maxlength="30"
                 class="title-textarea"
                 placeholder="请输入标题"
               />
@@ -235,12 +235,14 @@ onMounted(() => {
 }
 
 .page-header {
-  background: white;
-  border-bottom: 1px solid #e4e7ed;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-bottom: 1px solid rgba(64, 158, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   position: sticky;
   top: 0;
   z-index: 100;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .header-content {
@@ -260,15 +262,26 @@ onMounted(() => {
 }
 
 .header-icon {
-  font-size: 24px;
+  font-size: 28px;
   color: #409eff;
+  filter: drop-shadow(0 2px 4px rgba(64, 158, 255, 0.3));
+  transition: all 0.3s ease;
+}
+
+.header-icon:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 4px 8px rgba(64, 158, 255, 0.4));
 }
 
 .page-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #333;
+  font-size: 22px;
+  font-weight: 700;
+  color: #2c3e50;
   margin: 0;
+  background: linear-gradient(135deg, #409eff 0%, #667eea 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .header-actions {
@@ -286,14 +299,19 @@ onMounted(() => {
 }
 
 .form-container {
-  background: white;
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1),
+  0 8px 16px rgba(0, 0, 0, 0.06),
+  inset 0 1px 0 rgba(255, 255, 255, 0.8);
   position: relative;
   overflow: hidden;
   max-width: 1000px;
   margin: 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .form-container::before {
@@ -302,14 +320,50 @@ onMounted(() => {
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c);
-  border-radius: 12px 12px 0 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.form-container::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(64, 158, 255, 0.03) 0%, transparent 70%);
+  pointer-events: none;
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(1deg);
+  }
 }
 
 .form-section {
-  margin-bottom: 35px;
+  margin-bottom: 40px;
   position: relative;
+  padding: 25px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  border: 1px solid rgba(64, 158, 255, 0.1);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.form-section:hover {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(64, 158, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(64, 158, 255, 0.1);
 }
 
 .form-section:last-child {
@@ -317,8 +371,44 @@ onMounted(() => {
 }
 
 .radio-container {
-  display: flex; /* 使用 Flexbox */
-  gap: 20px; /* 设置元素之间的间距 */
+  display: flex;
+  gap: 50px;
+  flex-wrap: wrap;
+  margin-top: 0;
+  align-items: center;
+}
+
+
+/* 游戏选择和标签统一样式 */
+
+/* 标签选择样式 */
+.radio-container :deep(.el-radio) {
+  margin-right: 0;
+  margin-bottom: 10px;
+}
+
+.radio-container :deep(.el-checkbox-button) {
+  margin-right: 0;
+  margin-bottom: 10px;
+}
+
+.radio-container :deep(.el-checkbox-button__inner) {
+  border-radius: 16px;
+  padding: 4px 12px;
+  border: 1px solid #e4e7ed;
+  background: white;
+  color: #606266;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.radio-container :deep(.el-checkbox-button.is-checked .el-checkbox-button__inner) {
+  background: linear-gradient(135deg, #409eff 0%, #667eea 100%);
+  border-color: #409eff;
+  color: white;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+  transform: translateY(-1px);
 }
 
 .form-label {
@@ -369,29 +459,37 @@ onMounted(() => {
   width: 100%;
   max-width: 600px;
   height: 60px;
-  border: 1px solid #dcdfe6;
-  border-radius: 8px;
-  padding: 12px 16px;
+  border: 2px solid #e4e7ed;
+  border-radius: 12px;
+  padding: 16px 20px;
   font-size: 16px;
   font-family: inherit;
   resize: none;
   outline: none;
-  transition: all 0.3s ease;
-  background: white;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .title-textarea:hover {
   border-color: #c0c4cc;
+  background: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .title-textarea:focus {
   border-color: #409eff;
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1),
+  0 8px 25px rgba(64, 158, 255, 0.15);
+  transform: translateY(-2px);
 }
 
 .title-textarea::placeholder {
-  color: #c0c4cc;
-  font-size: 14px;
+  color: #a0a8b0;
+  font-size: 15px;
+  font-weight: 400;
 }
 
 .content-editor-wrapper {
@@ -593,64 +691,119 @@ onMounted(() => {
 }
 
 .upload-instructions {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-  padding: 20px;
-  border-radius: 12px;
-  border: 1px solid rgba(102, 126, 234, 0.1);
-  margin-bottom: 20px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  padding: 24px;
+  border-radius: 16px;
+  border: 2px solid rgba(102, 126, 234, 0.15);
+  margin-bottom: 24px;
   position: relative;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.1);
+  transition: all 0.3s ease;
+}
+
+.upload-instructions:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+  border-color: rgba(102, 126, 234, 0.25);
 }
 
 .upload-instructions::before {
   content: '💡';
   position: absolute;
-  top: 15px;
-  left: 15px;
-  font-size: 18px;
+  top: 20px;
+  left: 20px;
+  font-size: 20px;
+  filter: drop-shadow(0 2px 4px rgba(255, 193, 7, 0.3));
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
 }
 
 .upload-instructions p {
-  margin: 0 0 10px 0;
-  color: #606266;
-  font-size: 14px;
-  line-height: 1.6;
-  padding-left: 30px;
+  margin: 0 0 12px 0;
+  color: #4a5568;
+  font-size: 15px;
+  line-height: 1.7;
+  padding-left: 40px;
+  font-weight: 500;
 }
 
 .upload-instructions p:last-child {
   margin-bottom: 0;
+  color: #718096;
+  font-size: 14px;
 }
 
 .cover-upload-area {
   width: 100%;
-  height: 200px;
-  border: 2px dashed #dcdfe6;
-  border-radius: 8px;
+  height: 240px;
+  border: 3px dashed #cbd5e0;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
 .cover-upload-area:hover {
   border-color: #409eff;
-  background: #f0f9ff;
+  background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(64, 158, 255, 0.15),
+  inset 0 2px 4px rgba(64, 158, 255, 0.1);
+}
+
+.cover-upload-area::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(64, 158, 255, 0.1) 50%, transparent 70%);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.cover-upload-area:hover::before {
+  transform: translateX(100%);
 }
 
 .upload-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  color: #909399;
+  gap: 16px;
+  color: #718096;
+  z-index: 2;
+  position: relative;
 }
 
 .upload-icon {
-  font-size: 48px;
-  color: #c0c4cc;
+  font-size: 56px;
+  color: #a0aec0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: all 0.3s ease;
+}
+
+.cover-upload-area:hover .upload-icon {
+  color: #409eff;
+  transform: scale(1.1);
+  filter: drop-shadow(0 4px 8px rgba(64, 158, 255, 0.3));
 }
 
 .cover-preview {
@@ -761,20 +914,41 @@ onMounted(() => {
 }
 
 .btn-secondary {
-  background: white;
-  color: #606266;
-  border: 1px solid #dcdfe6;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  color: #4a5568;
+  border: 2px solid #e2e8f0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 6px;
-  min-width: 80px;
-  padding: 8px 20px;
+  border-radius: 10px;
+  min-width: 90px;
+  padding: 10px 24px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-secondary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(64, 158, 255, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.btn-secondary:hover::before {
+  left: 100%;
 }
 
 .btn-secondary:hover {
   border-color: #409eff;
   color: #409eff;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(64, 158, 255, 0.15);
 }
 
 .error-message {
@@ -788,19 +962,63 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .main-content {
-    padding: 10px;
+    padding: 15px;
   }
 
   .form-container {
-    padding: 20px;
+    padding: 25px 20px;
+    border-radius: 12px;
   }
 
   .header-content {
-    padding: 0 10px;
+    padding: 0 15px;
+    height: 70px;
   }
 
   .page-title {
     font-size: 18px;
+  }
+
+  .header-icon {
+    font-size: 24px;
+  }
+
+  .form-section {
+    padding: 20px 15px;
+    margin-bottom: 25px;
+  }
+
+  .radio-container {
+    gap: 15px;
+  }
+
+
+  .radio-container :deep(.el-checkbox-button__inner) {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .title-textarea {
+    height: 50px;
+    padding: 12px 16px;
+    font-size: 15px;
+  }
+
+  .upload-instructions {
+    padding: 20px 15px;
+  }
+
+  .upload-instructions p {
+    padding-left: 35px;
+    font-size: 14px;
+  }
+
+  .cover-upload-area {
+    height: 200px;
+  }
+
+  .upload-icon {
+    font-size: 48px;
   }
 
   .editor-toolbar {
@@ -820,6 +1038,83 @@ onMounted(() => {
   .btn {
     width: 100%;
     justify-content: center;
+    padding: 12px 20px;
+  }
+
+  .btn-primary {
+    min-width: auto;
+    font-size: 15px;
+  }
+
+  .btn-secondary {
+    min-width: auto;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 10px;
+  }
+
+  .form-container {
+    padding: 20px 15px;
+  }
+
+  .header-content {
+    padding: 0 10px;
+    height: 60px;
+  }
+
+  .page-title {
+    font-size: 16px;
+  }
+
+  .header-icon {
+    font-size: 20px;
+  }
+
+  .form-section {
+    padding: 15px 10px;
+    margin-bottom: 20px;
+  }
+
+  .radio-container {
+    gap: 12px;
+  }
+
+
+  .radio-container :deep(.el-checkbox-button__inner) {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .title-textarea {
+    height: 45px;
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+
+  .upload-instructions {
+    padding: 15px 12px;
+  }
+
+  .upload-instructions p {
+    padding-left: 30px;
+    font-size: 13px;
+  }
+
+  .cover-upload-area {
+    height: 180px;
+  }
+
+  .upload-icon {
+    font-size: 40px;
+  }
+
+  .btn {
+    padding: 10px 16px;
+    font-size: 14px;
   }
 }
 </style>
