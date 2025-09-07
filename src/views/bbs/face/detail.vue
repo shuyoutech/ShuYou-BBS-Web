@@ -2,7 +2,7 @@
 import {ref, onMounted} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 import {postCommentApi, postDetailApi, postLikeApi, postUnlikeApi} from '@/api/bbs/post'
-import type { PostVo} from '@/api/bbs/post/types'
+import type {PostVo} from '@/api/bbs/post/types'
 import {toast} from 'vue-sonner'
 import {commentPageApi} from "@/api/bbs/comment";
 import type {PostCommentQuery, PostCommentVo} from "@/api/bbs/comment/types.ts";
@@ -79,9 +79,37 @@ const likeComment = async (comment: any) => {
 }
 
 // 回复评论
-const replyToComment = (comment: any) => {
-  newComment.value = `@${comment.userName} `
+const replyComment = ref<PostCommentVo>()
+const replyContent = ref('')
+const replyToComment = (comment: PostCommentVo) => {
   // 可以添加更多回复逻辑，比如滚动到输入框
+  replyComment.value = comment
+  replyContent.value = ''
+  console.log(comment)
+}
+
+// 取消回复
+const cancelReply = () => {
+  replyComment.value = undefined
+  replyContent.value = ''
+}
+
+// 提交回复
+const submitReply = async () => {
+  if (!replyContent.value.trim() || !replyComment.value || !replyComment.value.metadata) return
+
+  try {
+    // 这里应该调用回复API
+    await postCommentApi(faceId, replyContent.value, replyComment.value.metadata.id)
+    toast.success('回复成功')
+    replyContent.value = ''
+    replyComment.value = undefined
+    // 重新加载评论
+    await loadComments()
+  } catch (error) {
+    console.error('回复失败:', error)
+    toast.error('回复失败')
+  }
 }
 
 // 加载更多评论
@@ -253,8 +281,31 @@ onMounted(() => {
                 </div>
               </div>
               <div class="floor-number">{{ comments.length - index }}楼</div>
+              <!-- 回复输入框 - 参考图片样式 -->
+              <div v-if="replyComment && replyComment.id === comment.id" class="reply-form">
+                <div class="reply-input-container">
+                   <textarea
+                     v-model="replyContent"
+                     placeholder=""
+                     class="reply-textarea"
+                     rows="4"
+                   ></textarea>
+                  <div class="reply-actions">
+                    <button
+                      class="submit-reply-btn"
+                      :disabled="!replyContent.trim()"
+                      @click="submitReply"
+                    >
+                      回复
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
+
+
           </div>
+
 
           <!-- 加载更多评论 -->
           <div class="load-more-section" v-if="hasMoreComments">
@@ -1042,6 +1093,71 @@ onMounted(() => {
 
 .action-icon {
   font-size: 12px;
+}
+
+/* 回复输入框样式 */
+.reply-form {
+  margin: 16px 0 0 0;
+  padding: 0;
+  background: transparent;
+  position: relative;
+}
+
+.reply-input-container {
+  position: relative;
+  width: 100%;
+}
+
+.reply-textarea {
+  width: 100%;
+  padding: 16px 80px 16px 16px;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  background: white;
+  box-sizing: border-box;
+}
+
+.reply-textarea:focus {
+  outline: none;
+  border-color: #409eff;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+}
+
+.reply-textarea::placeholder {
+  color: #a0a8b0;
+}
+
+.reply-actions {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+}
+
+.submit-reply-btn {
+  padding: 8px 20px;
+  background: #8b5cf6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.submit-reply-btn:hover:not(:disabled) {
+  background: #a0a8b0;
+}
+
+.submit-reply-btn:disabled {
+  background: #c0c4cc;
+  cursor: not-allowed;
 }
 
 /* 加载更多按钮 */
