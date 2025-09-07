@@ -6,7 +6,6 @@ import type {GameVo} from "@/api/game/types.ts";
 import {dictOptionsApi} from "@/api/common";
 import {postLikeApi, postPageApi, postUnlikeApi} from "@/api/bbs/post";
 import type {PostQuery, PostVo} from "@/api/bbs/post/types.ts";
-import {Search} from "lucide-vue-next";
 
 const router = useRouter()
 
@@ -136,7 +135,7 @@ onMounted(() => {
         <!-- 第一排：热门游戏选择 -->
         <div class="game-selector">
           <div class="game-section">
-            <span class="game-label">热门游戏</span>
+            <span class="game-label">游戏</span>
             <div class="game-buttons">
               <button
                 v-for="game in gameList"
@@ -176,30 +175,30 @@ onMounted(() => {
               class="search-input"
               @change="handleSearch"
             />
-            &nbsp;&nbsp;&nbsp;&nbsp;
-            <el-button size="large" :icon="Search" circle @click="handleSearch"/>
           </div>
-          <div class="sort-buttons">
-            <button
-              :class="['sort-btn', { active: postQuery.sort === 'createTime' }]"
-              @click="handSort('createTime')"
-            >
-              <FaIcon name="i-mdi:clock-outline" class="sort-icon"/>
-              <span>最新</span>
-            </button>
-            <button
-              :class="['sort-btn', { active: postQuery.sort === 'likeCount' }]"
-              @click="handSort('likeCount')"
-            >
-              <FaIcon name="i-mdi:fire" class="sort-icon"/>
-              <span>最热</span>
-            </button>
-          </div>
-          <div class="header-actions">
-            <button class="btn btn-primary" @click="goToUpload">
-              <FaIcon name="i-mdi:plus"/>
-              上传捏脸
-            </button>
+          <div class="sort-upload-group">
+            <div class="sort-buttons">
+              <button
+                :class="['sort-btn', { active: postQuery.sort === 'createTime' }]"
+                @click="handSort('createTime')"
+              >
+                <FaIcon name="i-mdi:clock-outline" class="sort-icon"/>
+                <span>最新</span>
+              </button>
+              <button
+                :class="['sort-btn', { active: postQuery.sort === 'likeCount' }]"
+                @click="handSort('likeCount')"
+              >
+                <FaIcon name="i-mdi:fire" class="sort-icon"/>
+                <span>最热</span>
+              </button>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-primary" @click="goToUpload">
+                <FaIcon name="i-mdi:plus"/>
+                上传捏脸
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -287,6 +286,12 @@ onMounted(() => {
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
+.sort-upload-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .header-actions {
   display: flex;
   gap: 12px;
@@ -296,7 +301,7 @@ onMounted(() => {
 .filter-section {
   background: white;
   border-bottom: 1px solid #e4e7ed;
-  padding: 10px 0;
+  padding: 8px 0;
 }
 
 .filter-content {
@@ -305,16 +310,16 @@ onMounted(() => {
   padding: 0 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .search-filter-row {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   flex-wrap: wrap;
-  justify-content: center;
-  margin-bottom: 12px;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
 
 .search-box {
@@ -335,10 +340,10 @@ onMounted(() => {
 
 .search-input {
   width: 80%;
-  padding: 16px 20px 16px 15px;
+  padding: 12px 16px 12px 12px;
   border: 2px solid #e4e7ed;
-  border-radius: 25px;
-  font-size: 16px;
+  border-radius: 20px;
+  font-size: 14px;
   transition: all 0.3s ease;
   background: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -429,7 +434,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .game-section {
@@ -461,20 +466,20 @@ onMounted(() => {
 .game-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
+  gap: 6px;
+  padding: 8px 12px;
   border: 2px solid #e4e7ed;
   background: white;
-  border-radius: 25px;
+  border-radius: 20px;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 14px;
+  font-size: 13px;
   color: #606266;
   white-space: nowrap;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   justify-content: center;
   flex-shrink: 0;
-  min-width: 120px;
+  min-width: 100px;
   width: 100%;
 }
 
@@ -494,15 +499,15 @@ onMounted(() => {
 }
 
 .game-btn-icon {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
   object-fit: cover;
   flex-shrink: 0;
 }
 
 .game-btn-text {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -515,7 +520,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 /* 标签按钮容器样式 */
@@ -532,20 +537,20 @@ onMounted(() => {
 .tag-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
+  gap: 4px;
+  padding: 6px 12px;
   border: 1px solid #e4e7ed;
   background: #f8f9fa;
-  border-radius: 20px;
+  border-radius: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 13px;
+  font-size: 12px;
   color: #606266;
   white-space: nowrap;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   justify-content: center;
   flex-shrink: 0;
-  min-width: 80px;
+  min-width: 60px;
 }
 
 .tag-btn:hover {
@@ -564,7 +569,7 @@ onMounted(() => {
 }
 
 .tag-btn-text {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -586,17 +591,17 @@ onMounted(() => {
 .sort-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
+  gap: 6px;
+  padding: 10px 16px;
   border: none;
   background: white;
   color: #909399;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   border-right: 1px solid #e4e7ed;
-  min-width: 80px;
+  min-width: 70px;
   justify-content: center;
 }
 
@@ -617,13 +622,13 @@ onMounted(() => {
 }
 
 .sort-icon {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .main-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 16px 20px;
 }
 
 .content-wrapper {
@@ -633,15 +638,15 @@ onMounted(() => {
 .content-main {
   background: white;
   border-radius: 12px;
-  padding: 20px;
+  padding: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .works-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  margin-bottom: 30px;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .work-card {
@@ -728,15 +733,15 @@ onMounted(() => {
 }
 
 .work-info {
-  padding: 16px;
+  padding: 12px;
   position: relative;
 }
 
 .work-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: #333;
-  margin: 0 0 12px 0;
+  margin: 0 0 8px 0;
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -749,7 +754,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .author-info {
@@ -781,8 +786,8 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .work-tags {
@@ -967,7 +972,7 @@ onMounted(() => {
 .pagination {
   display: flex;
   justify-content: center;
-  padding: 20px 0;
+  padding: 16px 0;
 }
 
 
@@ -1127,11 +1132,11 @@ onMounted(() => {
   background: linear-gradient(135deg, #409eff, #337ecc);
   color: white;
   box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
-  border-radius: 25px;
-  padding: 14px 28px;
+  border-radius: 20px;
+  padding: 10px 20px;
   font-weight: 600;
-  font-size: 16px;
-  min-width: 140px;
+  font-size: 14px;
+  min-width: 120px;
   justify-content: center;
 }
 
