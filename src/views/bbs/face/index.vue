@@ -6,15 +6,10 @@ import type {GameVo} from "@/api/game/types.ts";
 import {dictOptionsApi} from "@/api/common";
 import {postLikeApi, postPageApi, postUnlikeApi} from "@/api/bbs/post";
 import type {PostQuery, PostVo} from "@/api/bbs/post/types.ts";
+import {Search} from "lucide-vue-next";
 
 const router = useRouter()
 
-// 游戏选择相关
-const selectedGames = ref<string[]>([])
-// 标签选择相关
-const selectedTypes = ref<string[]>([])
-// 响应式数据
-const searchQuery = ref('')
 // 捏脸列表数据
 const faceList = reactive<PostVo[]>([]);
 const faceCount = ref(0)
@@ -24,7 +19,10 @@ const postQuery = reactive<PageQuery<PostQuery>>({
   pageSize: 15,
   sort: 'createTime',
   order: 'desc',
-  query: {}
+  query: {
+    gameId: '',
+    tags: [],
+  }
 })
 
 const viewFace = (_face: any) => {
@@ -64,21 +62,24 @@ const formatNumber = (num: number) => {
 
 // 游戏选择相关方法
 const toggleGame = (gameId: string) => {
-  const index = selectedGames.value.indexOf(gameId)
-  if (index > -1) {
-    selectedGames.value.splice(index, 1)
+  if (postQuery.query.gameId && postQuery.query.gameId === gameId) {
+    postQuery.query.gameId = ''
   } else {
-    selectedGames.value.push(gameId)
+    postQuery.query.gameId = gameId
   }
+  handleSearch()
 }
 
 // 标签选择相关方法
 const toggleType = (value: string) => {
-  const index = selectedTypes.value.indexOf(value)
-  if (index > -1) {
-    selectedTypes.value.splice(index, 1)
-  } else {
-    selectedTypes.value.push(value)
+  if (postQuery.query.tags) {
+    const index = postQuery.query.tags.indexOf(value)
+    if (index > -1) {
+      postQuery.query.tags.splice(index, 1)
+    } else {
+      postQuery.query.tags.push(value)
+    }
+    handleSearch()
   }
 }
 
@@ -106,9 +107,6 @@ const handSort = (sort: string) => {
 // 查询捏脸列表
 const handleSearch = () => {
   postQuery.query.plate = '1'
-  postQuery.query.title = searchQuery.value
-  postQuery.query.tag = ''
-  postQuery.query.gameId = ''
   faceList.length = 0
   faceCount.value = 0
   postPageApi(postQuery).then(({data}) => {
@@ -143,7 +141,7 @@ onMounted(() => {
               <button
                 v-for="game in gameList"
                 :key="game.id"
-                :class="['game-btn', { active: selectedGames.includes(game.id) }]"
+                :class="['game-btn', { active: postQuery.query.gameId === game.id }]"
                 @click="toggleGame(game.id)"
               >
                 <img :src="game.gameIcon" :alt="game.gameName" class="game-btn-icon"/>
@@ -160,7 +158,7 @@ onMounted(() => {
             <button
               v-for="type in typeList"
               :key="type.value"
-              :class="['tag-btn', { active: selectedTypes.includes(type.value) }]"
+              :class="['tag-btn', { active: postQuery.query.tags?.includes(type.value) }]"
               @click="toggleType(type.value)"
             >
               <span class="tag-btn-text">{{ type.label }}</span>
@@ -171,14 +169,15 @@ onMounted(() => {
         <!-- 第三排：搜索和排序 -->
         <div class="search-filter-row">
           <div class="search-box">
-            <FaIcon name="i-mdi:magnify" class="search-icon"/>
             <input
-              v-model="searchQuery"
+              v-model="postQuery.query.title"
               type="text"
               placeholder="搜索捏脸作品..."
               class="search-input"
               @change="handleSearch"
             />
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            <el-button size="large" :icon="Search" circle @click="handleSearch"/>
           </div>
           <div class="sort-buttons">
             <button
@@ -335,8 +334,8 @@ onMounted(() => {
 }
 
 .search-input {
-  width: 100%;
-  padding: 16px 20px 16px 50px;
+  width: 80%;
+  padding: 16px 20px 16px 15px;
   border: 2px solid #e4e7ed;
   border-radius: 25px;
   font-size: 16px;

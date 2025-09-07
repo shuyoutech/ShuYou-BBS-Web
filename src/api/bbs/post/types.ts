@@ -5,7 +5,7 @@ export interface PostQuery {
   status?: string;//帖子状态
   plate?: string; //帖子板块
   title?: string; //帖子标题
-  tag?: string    //帖子标签
+  tags?: string[];//帖子标签
   gameId?: string;//游戏ID
 }
 

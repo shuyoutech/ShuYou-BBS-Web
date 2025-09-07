@@ -46,7 +46,7 @@ const formRules = ref<FormRules>({
   gameId: [
     {required: true, message: '请选择游戏', trigger: 'blur'},
   ],
-  tag: [
+  tags: [
     {required: true, message: '请选择标签', trigger: 'blur'},
   ],
   title: [
@@ -61,7 +61,7 @@ const formRules = ref<FormRules>({
 })
 const form = reactive({
   gameId: '',
-  tag: '',
+  tags: [],
   title: '',
   content: '',
   coverImg: [],
@@ -79,7 +79,7 @@ const onSubmit = () => {
   formRef.value?.validate((valid) => {
     if (valid) {
       data.gameId = form.gameId
-      data.tags = form.tag ? [form.tag] : []
+      data.tags = form.tags
       data.title = form.title
       data.content = form.content
       data.coverImgUrl = form.coverImg[0]
@@ -152,12 +152,12 @@ onMounted(() => {
             <ElFormItem label="标签" prop="tag">
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
               <div class="radio-container">
-                <el-radio-group v-model="form.tag">
-                  <el-radio-button :label="tag.label"
+                <el-checkbox-group v-model="form.tags">
+                  <el-checkbox-button :label="tag.label"
                                    v-for="tag in tags"
                                    :key="tag.value"
-                                   border></el-radio-button>
-                </el-radio-group>
+                                   border></el-checkbox-button>
+                </el-checkbox-group>
               </div>
             </ElFormItem>
           </div>
