@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {ref, onMounted} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
-import {postCommentApi, postDetailApi, postLikeApi, postReplyApi, postUnlikeApi} from '@/api/bbs/post'
+import {postCommentApi, postDetailApi, postReplyApi} from '@/api/bbs/post'
 import type {PostVo} from '@/api/bbs/post/types'
 import {toast} from 'vue-sonner'
 import {commentPageApi} from "@/api/bbs/comment";
@@ -14,34 +14,6 @@ const route = useRoute()
 const newComment = ref('')
 const hasMoreComments = ref(true)
 const commentLoading = ref(false)
-
-// 点赞功能
-const likeFace = async () => {
-  if (!faceDetail.value) return
-
-  try {
-    faceDetail.value.liked = !faceDetail.value.liked
-    if (faceDetail.value.liked) {
-      faceDetail.value.likeCount++
-      await postLikeApi(faceDetail.value.id)
-      toast.success('点赞成功')
-    } else {
-      faceDetail.value.likeCount--
-      await postUnlikeApi(faceDetail.value.id)
-      toast.success('取消点赞')
-    }
-  } catch (error) {
-    // 回滚状态
-    faceDetail.value.liked = !faceDetail.value.liked
-    if (faceDetail.value.liked) {
-      faceDetail.value.likeCount++
-    } else {
-      faceDetail.value.likeCount--
-    }
-    console.error('点赞操作失败:', error)
-    toast.error('操作失败，请重试')
-  }
-}
 
 // 返回上一页
 const goBack = () => {
@@ -81,18 +53,44 @@ const likeComment = async (comment: any) => {
 // 回复评论
 const replyComment = ref<Tree<PostCommentVo>>()
 const replyContent = ref('')
+const showReplies = ref<Set<string>>(new Set())
+
 const replyToComment = (comment: Tree<PostCommentVo>) => {
-  // 可以添加更多回复逻辑，比如滚动到输入框
+  // 切换回复列表显示状态
+  const commentId = comment.value
+  if (showReplies.value.has(commentId)) {
+    showReplies.value.delete(commentId)
+    replyComment.value = undefined
+  } else {
+    showReplies.value.add(commentId)
+    // 不设置回复框，只显示回复列表
+    replyComment.value = undefined
+    replyContent.value = ''
+  }
+}
+
+// 显示回复框
+const showReplyForm = (comment: Tree<PostCommentVo>) => {
   replyComment.value = comment
   replyContent.value = ''
 }
 
-// 提交回复
-const submitReply = async () => {
-  if (replyComment.value) {
-    await postReplyApi(faceId, replyComment.value.value, replyContent.value)
+  // 提交回复
+  const submitReply = async () => {
+    if (!replyContent.value.trim() || !replyComment.value) return
+
+    try {
+      await postReplyApi(faceId, replyComment.value.value, replyContent.value)
+      toast.success('回复成功')
+      replyContent.value = ''
+      replyComment.value = undefined
+      // 重新加载评论
+      await loadComments()
+    } catch (error) {
+      console.error('回复失败:', error)
+      toast.error('回复失败')
+    }
   }
-}
 
 // 加载更多评论
 const loadMoreComments = async () => {
@@ -227,6 +225,7 @@ onMounted(() => {
               :key="comment.value"
             >
               <div class="comment-item">
+                <div class="floor-number">{{ comments.length - index }}楼</div>
                 <div class="comment-avatar">
                   <img
                     :src="comment.metadata.userAvatar"
@@ -249,7 +248,12 @@ onMounted(() => {
                     <div class="meta-right">
                       <div class="action-buttons">
                         <button class="action-link report-btn">举报</button>
-                        <button class="action-link reply-btn" @click="replyToComment(comment)">回复</button>
+                        <button class="action-link reply-btn" @click="replyToComment(comment)">
+                          回复
+                          <span v-if="comment.children && comment.children.length > 0" class="reply-count">
+                            ({{ comment.children.length }})
+                          </span>
+                        </button>
                         <button
                           class="action-link like-btn"
                           :class="{ liked: comment.metadata.liked }"
@@ -262,25 +266,86 @@ onMounted(() => {
                     </div>
                   </div>
                 </div>
-                <div class="floor-number">{{ comments.length - index }}楼</div>
               </div>
 
-              <!-- 回复输入框 - 移到评论项外面 -->
-              <div v-if="replyComment && replyComment.value === comment.value" class="reply-form">
-                <div class="reply-input-container">
-                   <textarea
-                     v-model="replyContent"
-                     placeholder=""
-                     class="reply-textarea"
-                     rows="4"
-                   ></textarea>
-                  <button
-                    class="submit-reply-btn"
-                    :disabled="!replyContent.trim()"
-                    @click="submitReply"
+
+              <!-- 子回复列表 -->
+              <div v-if="comment.children && comment.children.length > 0 && showReplies.has(comment.value)" class="reply-list-container">
+                <div class="reply-list-header">
+                  <span class="reply-list-title">回复列表</span>
+                  <button class="collapse-replies-btn" @click="replyToComment(comment)">收起回复</button>
+                </div>
+                <div class="reply-list">
+                  <div
+                    v-for="(reply, replyIndex) in comment.children"
+                    :key="reply.value"
+                    class="reply-item"
                   >
-                    回复
+                    <div class="reply-avatar">
+                      <img
+                        :src="reply.metadata.userAvatar"
+                        :alt="reply.metadata.userName"
+                        class="avatar-img"
+                      />
+                    </div>
+                    <div class="reply-content">
+                      <div class="reply-header">
+                        <span class="reply-author">{{ reply.metadata.userName }}</span>
+                        <span class="reply-to" v-if="reply.metadata.replyToUserName">
+                          回复 {{ reply.metadata.replyToUserName }}:
+                        </span>
+                      </div>
+                      <div class="reply-text">{{ reply.metadata.content }}</div>
+                      <div class="reply-meta">
+                        <div class="meta-left">
+                          <span class="reply-time">{{ reply.metadata.createTimeFormat }}</span>
+                          <span class="reply-location" v-if="reply.metadata.ipLocation">{{
+                              reply.metadata.ipLocation
+                            }}</span>
+                        </div>
+                        <div class="meta-right">
+                          <div class="action-buttons">
+                            <button class="action-link report-btn">举报</button>
+                            <button class="action-link reply-btn" @click="replyToComment(reply)">回复</button>
+                            <button
+                              class="action-link like-btn"
+                              :class="{ liked: reply.metadata.liked }"
+                              @click="likeComment(reply)"
+                            >
+                              <FaIcon name="i-mdi:thumb-up" class="action-icon"/>
+                              <span>{{ reply.metadata.likeCount || 0 }}</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 我也说一句按钮 -->
+                <div class="reply-action-section">
+                  <button class="i-want-to-reply-btn" @click="showReplyForm(comment)">
+                    我也说一句
                   </button>
+                </div>
+
+                <!-- 回复输入框 - 在我也说一句按钮下面 -->
+                <div v-if="replyComment && replyComment.value === comment.value" class="reply-form">
+                  <div class="reply-input-container">
+                     <textarea
+                       v-model="replyContent"
+                       placeholder=""
+                       class="reply-textarea"
+                       rows="4"
+                     ></textarea>
+                    <button
+                      class="submit-reply-btn"
+                      :disabled="!replyContent.trim()"
+                      @click="submitReply"
+                    >
+                      回复
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1037,10 +1102,11 @@ onMounted(() => {
 .floor-number {
   position: absolute;
   top: 16px;
-  right: 0;
+  right: 16px;
   font-size: 12px;
   color: #999;
   font-weight: 500;
+  z-index: 1;
 }
 
 .action-buttons {
@@ -1068,6 +1134,12 @@ onMounted(() => {
   color: #666;
 }
 
+.reply-count {
+  color: #666;
+  font-size: 12px;
+  margin-left: 2px;
+}
+
 .like-btn.liked {
   color: #ff4757;
 }
@@ -1078,9 +1150,10 @@ onMounted(() => {
 
 /* 回复输入框样式 */
 .reply-form {
-  margin: 16px 0 0 52px;
-  padding: 0;
-  background: transparent;
+  margin: 0;
+  padding: 16px;
+  background: white;
+  border-top: 1px solid #e4e7ed;
   position: relative;
 }
 
@@ -1139,6 +1212,138 @@ onMounted(() => {
 .submit-reply-btn:disabled {
   background: #c0c4cc;
   cursor: not-allowed;
+}
+
+/* 子回复列表容器样式 */
+.reply-list-container {
+  margin: 16px 0 0 52px;
+  background: white;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.reply-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.reply-list-title {
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+}
+
+.collapse-replies-btn {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.collapse-replies-btn:hover {
+  background: #e9ecef;
+  color: #333;
+}
+
+.reply-list {
+  padding: 0;
+}
+
+.reply-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.reply-item:last-child {
+  border-bottom: none;
+}
+
+.reply-avatar {
+  flex-shrink: 0;
+}
+
+.reply-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reply-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reply-author {
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+}
+
+.reply-to {
+  color: #666;
+  font-size: 12px;
+}
+
+.reply-text {
+  color: #333;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.reply-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.reply-time {
+  font-size: 12px;
+  color: #999;
+}
+
+.reply-location {
+  font-size: 12px;
+  color: #999;
+  margin-left: 8px;
+}
+
+/* 我也说一句按钮 */
+.reply-action-section {
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-top: 1px solid #e4e7ed;
+  text-align: right;
+}
+
+.i-want-to-reply-btn {
+  background: #409eff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.i-want-to-reply-btn:hover {
+  background: #337ecc;
+  transform: translateY(-1px);
 }
 
 /* 加载更多按钮 */
