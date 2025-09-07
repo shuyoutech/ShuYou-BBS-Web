@@ -1,30 +1,23 @@
 <script setup lang="ts">
 import {ref, onMounted} from 'vue'
 import {useRouter} from 'vue-router'
-import {ElMessage} from 'element-plus'
 import {gameHotListApi} from "@/api/game";
 import type {GameVo} from "@/api/game/types.ts";
 import {dictOptionsApi} from "@/api/common";
-import {postPageApi} from "@/api/bbs/post";
+import {postLikeApi, postPageApi, postUnlikeApi} from "@/api/bbs/post";
 import type {PostQuery, PostVo} from "@/api/bbs/post/types.ts";
 
 const router = useRouter()
-
-// 响应式数据
-const searchQuery = ref('')
-const sortBy = ref('latest')
-
-// 分页相关
-const currentPage = ref(1)
-const pageSize = ref(12)
-const totalWorks = ref(0)
 
 // 游戏选择相关
 const selectedGames = ref<string[]>([])
 // 标签选择相关
 const selectedTypes = ref<string[]>([])
+// 响应式数据
+const searchQuery = ref('')
 // 捏脸列表数据
 const faceList = reactive<PostVo[]>([]);
+const faceCount = ref(0)
 
 const postQuery = reactive<PageQuery<PostQuery>>({
   pageNum: 1,
@@ -34,29 +27,30 @@ const postQuery = reactive<PageQuery<PostQuery>>({
   query: {}
 })
 
-const viewWork = (_work: any) => {
+const viewFace = (_face: any) => {
 
 }
 
-const likeWork = (work: any) => {
-  work.isLiked = !work.isLiked
-  if (work.isLiked) {
-    work.likes++
-    ElMessage.success('已添加到喜欢列表')
+const likeFace = (face: PostVo) => {
+  face.liked = !face.liked
+  if (face.liked) {
+    face.likeCount++
+    postLikeApi(face.id)
   } else {
-    work.likes--
-    ElMessage.info('已取消喜欢')
+    face.likeCount--
+    postUnlikeApi(face.id)
   }
 }
 
-
-const handleSizeChange = (size: number) => {
-  pageSize.value = size
-  currentPage.value = 1 // 重置到第一页
+const handleSizeChange = (pageSize: number) => {
+  postQuery.pageSize = pageSize
+  postQuery.pageNum = 1
+  handleSearch()
 }
 
-const handleCurrentChange = (page: number) => {
-  currentPage.value = page
+const handleCurrentChange = (pageNum: number) => {
+  postQuery.pageNum = pageNum
+  handleSearch()
 }
 
 const formatNumber = (num: number) => {
@@ -66,10 +60,6 @@ const formatNumber = (num: number) => {
     return (num / 1000).toFixed(1) + 'k'
   }
   return num.toString()
-}
-
-const goToUpload = () => {
-  router.push('/face-upload')
 }
 
 // 游戏选择相关方法
@@ -108,16 +98,29 @@ const loadFaceTypes = () => {
   })
 }
 
-// 方法
+const handSort = (sort: string) => {
+  postQuery.sort = sort
+  handleSearch()
+}
+
+// 查询捏脸列表
 const handleSearch = () => {
   postQuery.query.plate = '1'
   postQuery.query.title = searchQuery.value
+  postQuery.query.tag = ''
+  postQuery.query.gameId = ''
+  faceList.length = 0
+  faceCount.value = 0
   postPageApi(postQuery).then(({data}) => {
-    console.log(JSON.stringify(data));
     Object.assign(faceList, data.rows)
+    faceCount.value = Number(data.total)
   });
 }
 
+// 跳转到上传捏脸页面
+const goToUpload = () => {
+  router.push('/face-upload')
+}
 
 onMounted(() => {
   loadGames()
@@ -174,20 +177,20 @@ onMounted(() => {
               type="text"
               placeholder="搜索捏脸作品..."
               class="search-input"
-              @input="handleSearch"
+              @change="handleSearch"
             />
           </div>
           <div class="sort-buttons">
             <button
-              :class="['sort-btn', { active: sortBy === 'latest' }]"
-              @click="sortBy = 'latest'"
+              :class="['sort-btn', { active: postQuery.sort === 'createTime' }]"
+              @click="handSort('createTime')"
             >
               <FaIcon name="i-mdi:clock-outline" class="sort-icon"/>
               <span>最新</span>
             </button>
             <button
-              :class="['sort-btn', { active: sortBy === 'popular' }]"
-              @click="sortBy = 'popular'"
+              :class="['sort-btn', { active: postQuery.sort === 'likeCount' }]"
+              @click="handSort('likeCount')"
             >
               <FaIcon name="i-mdi:fire" class="sort-icon"/>
               <span>最热</span>
@@ -214,7 +217,7 @@ onMounted(() => {
               v-for="face in faceList"
               :key="face.id"
               class="work-card"
-              @click="viewWork(face)"
+              @click="viewFace(face)"
             >
               <div class="work-image">
                 <img :src="face.coverImgUrl" :alt="face.title" class="cover-img"/>
@@ -237,11 +240,11 @@ onMounted(() => {
                 <div class="work-tags-row">
                   <div class="work-tags">
                     <span
-                      v-for="tag in face.tags"
-                      :key="tag"
+                      v-for="tagName in face.tagNames"
+                      :key="tagName"
                       class="work-tag"
                     >
-                      {{ tag }}
+                      {{ tagName }}
                     </span>
                   </div>
                   <!-- 统计信息显示区域 -->
@@ -250,7 +253,7 @@ onMounted(() => {
                       <FaIcon name="i-mdi:eye" class="stats-icon"/>
                       <span class="stats-number">{{ formatNumber(face.viewCount) }}</span>
                     </div>
-                    <div class="stats-item likes clickable" @click.stop="likeWork(face)">
+                    <div class="stats-item likes clickable" @click.stop="likeFace(face)">
                       <FaIcon name="i-mdi:heart" :class="['stats-icon', { liked: face.liked }]"/>
                       <span class="stats-number">{{ formatNumber(face.likeCount) }}</span>
                     </div>
@@ -263,15 +266,15 @@ onMounted(() => {
 
           <!-- 分页 -->
           <div class="pagination">
-            <el-pagination
-              v-model:current-page="currentPage"
-              v-model:page-size="pageSize"
-              :total="totalWorks"
-              :page-sizes="[12, 24, 48]"
-              layout="total, sizes, prev, pager, next, jumper"
-              @size-change="handleSizeChange"
-              @current-change="handleCurrentChange"
-            />
+            <ElPagination :current-page="postQuery.pageNum"
+                          :total="faceCount"
+                          :page-size="postQuery.pageSize"
+                          :page-sizes="[15, 30, 45]"
+                          layout="total, sizes, prev, pager, next, jumper"
+                          class="pagination"
+                          background
+                          @current-change="handleCurrentChange"
+                          @size-change="handleSizeChange"/>
           </div>
         </div>
       </div>
@@ -661,12 +664,13 @@ onMounted(() => {
   width: 100%;
   height: 200px;
   overflow: hidden;
+  background: #f8f9fa;
 }
 
 .cover-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: fill;
   transition: transform 0.3s ease;
 }
 

@@ -18,7 +18,7 @@ export function postPageApi(data: PageQuery<PostQuery>): Promise<AxiosResponse<P
  */
 export function postDetailApi(postId: string): Promise<AxiosResponse<PostVo>> {
   return api({
-    url: '/bbs/post/detail' + postId,
+    url: '/bbs/post/detail/' + postId,
     method: 'post'
   });
 }
@@ -101,7 +101,17 @@ export function postReplyApi(postId: string, commentId: string, replyContent: st
  */
 export function postLikeApi(postId: string) {
   return api({
-    url: '/bbs/post/like' + postId,
+    url: '/bbs/post/like/' + postId,
+    method: 'post'
+  });
+}
+
+/**
+ * 帖子管理-取消点赞帖子
+ */
+export function postUnlikeApi(postId: string) {
+  return api({
+    url: '/bbs/post/unlike/' + postId,
     method: 'post'
   });
 }

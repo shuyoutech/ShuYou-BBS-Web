@@ -5,6 +5,8 @@ export interface PostQuery {
   status?: string;//帖子状态
   plate?: string; //帖子板块
   title?: string; //帖子标题
+  tag?: string    //帖子标签
+  gameId?: string;//游戏ID
 }
 
 /**
@@ -21,6 +23,7 @@ export interface PostVo {
   plate: string;          //帖子板块
   category: string;       //帖子分类
   tags: string[];         //标签集合
+  tagNames: string[];     //标签名称集合
   title: string;          //帖子标题
   content: string;        //帖子内容
   summary: string;        //帖子摘要
