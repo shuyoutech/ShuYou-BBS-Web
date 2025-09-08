@@ -4,7 +4,7 @@ import {useRouter} from 'vue-router'
 import {gameHotListApi} from "@/api/game";
 import type {GameVo} from "@/api/game/types.ts";
 import {dictOptionsApi} from "@/api/common";
-import {postLikeApi, postPageApi, postUnlikeApi} from "@/api/bbs/post";
+import {postPageApi} from "@/api/bbs/post";
 import type {PostQuery, PostVo} from "@/api/bbs/post/types.ts";
 
 const router = useRouter()
@@ -29,16 +29,7 @@ const viewSkin = (skin: PostVo) => {
   router.push(`/guide/detail/${skin.id}`)
 }
 
-const likeSkin = (skin: PostVo) => {
-  skin.liked = !skin.liked
-  if (skin.liked) {
-    skin.likeCount++
-    postLikeApi(skin.id)
-  } else {
-    skin.likeCount--
-    postUnlikeApi(skin.id)
-  }
-}
+// 移除点赞功能，保持列表简洁
 
 const handleSizeChange = (pageSize: number) => {
   postQuery.pageSize = pageSize
@@ -58,6 +49,66 @@ const formatNumber = (num: number) => {
     return (num / 1000).toFixed(1) + 'k'
   }
   return num.toString()
+}
+
+// 从content中提取第一张图片
+const extractFirstImage = (content: string) => {
+  if (!content) return null
+  
+  // 匹配img标签的src属性
+  const imgRegex = /<img[^>]+src\s*=\s*["']([^"']+)["'][^>]*>/i
+  const match = content.match(imgRegex)
+  
+  if (match && match[1]) {
+    return match[1]
+  }
+  
+  // 如果没有找到img标签，尝试匹配其他可能的图片格式
+  const urlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp|bmp))/i
+  const urlMatch = content.match(urlRegex)
+  
+  if (urlMatch && urlMatch[1]) {
+    return urlMatch[1]
+  }
+  
+  return null
+}
+
+// 清理HTML内容，移除标签和实体符号
+const cleanHtmlContent = (content: string) => {
+  if (!content) return '暂无内容预览'
+  
+  // 移除HTML标签
+  let cleanContent = content.replace(/<[^>]*>/g, '')
+  
+  // 替换HTML实体符号
+  cleanContent = cleanContent
+    .replace(/&nbsp;/g, ' ')           // 非断行空格
+    .replace(/&amp;/g, '&')            // &符号
+    .replace(/&lt;/g, '<')             // 小于号
+    .replace(/&gt;/g, '>')             // 大于号
+    .replace(/&quot;/g, '"')           // 双引号
+    .replace(/&#39;/g, "'")            // 单引号
+    .replace(/&apos;/g, "'")           // 单引号
+    .replace(/&hellip;/g, '...')       // 省略号
+    .replace(/&mdash;/g, '—')          // 长破折号
+    .replace(/&ndash;/g, '–')          // 短破折号
+    .replace(/&copy;/g, '©')           // 版权符号
+    .replace(/&reg;/g, '®')            // 注册商标
+    .replace(/&trade;/g, '™')          // 商标符号
+  
+  // 清理多余的空格和换行
+  cleanContent = cleanContent
+    .replace(/\s+/g, ' ')              // 多个空格替换为单个空格
+    .replace(/\n\s*\n/g, '\n')         // 多个换行替换为单个换行
+    .trim()                            // 去除首尾空格
+  
+  // 截取前100个字符
+  if (cleanContent.length > 100) {
+    cleanContent = cleanContent.substring(0, 100) + '...'
+  }
+  
+  return cleanContent
 }
 
 // 游戏选择相关方法
@@ -210,65 +261,52 @@ onMounted(() => {
       <div class="content-wrapper">
         <!-- 内容区 -->
         <div class="content-main">
-          <!-- 作品网格 -->
-          <div class="works-grid">
+          <!-- 攻略列表 -->
+          <div class="guide-list">
             <div
-              v-for="skin in skinList"
-              :key="skin.id"
-              class="work-card"
-              @click="viewSkin(skin)"
+              v-for="(guide, index) in skinList"
+              :key="guide.id"
+              class="guide-item"
+              @click="viewSkin(guide)"
             >
-              <div class="work-image">
-                <img :src="skin.coverImgUrl" :alt="skin.title" class="cover-img"/>
-                <div class="work-overlay">
-                  <div class="overlay-hint">
-                    <FaIcon name="i-mdi:eye" class="hint-icon" />
-                    <span class="hint-text">点击查看详情</span>
+              <!-- 左侧序号 -->
+              <div class="guide-number">{{ skinList.length - index }}</div>
+              
+              <!-- 中间内容区 -->
+              <div class="guide-content">
+                <!-- 标题和标签 -->
+                <div class="guide-header">
+                  <h3 class="guide-title">{{ guide.title }}</h3>
+                  <div class="guide-badges">
+                    <span v-if="guide.isSticky" class="badge sticky">置顶</span>
+                    <span v-if="guide.isFeatured" class="badge featured">精</span>
                   </div>
+                </div>
+                
+                <!-- 内容预览 -->
+                <div class="guide-preview">
+                  {{ cleanHtmlContent(guide.content) }}
+                </div>
+                
+                <!-- 图片预览 -->
+                <div v-if="extractFirstImage(guide.content)" class="guide-images">
+                  <img :src="extractFirstImage(guide.content)" :alt="guide.title" class="preview-image"/>
                 </div>
               </div>
-              <div class="work-info">
-                <h3 class="work-title">{{ skin.title }}</h3>
-                <div class="work-meta">
-                  <div class="author-info">
-                    <img :src="skin.userAvatar" :alt="skin.userName" class="author-avatar"/>
-                    <span class="author-name">{{ skin.userName }}</span>
-                    <div class="work-location">
-                      <FaIcon name="i-mdi:map-marker" class="location-icon"/>
-                      <span class="location-text">{{ skin.ipLocation }}</span>
-                    </div>
-                  </div>
-                  <span class="work-date">{{ skin.createTimeFormat }}</span>
+              
+              <!-- 右侧信息 -->
+              <div class="guide-meta">
+                <div class="author-info">
+                  <img :src="guide.userAvatar" :alt="guide.userName" class="author-avatar"/>
+                  <span class="author-name">{{ guide.userName }}</span>
                 </div>
-                <div class="work-tags-row">
-                  <div class="work-tags">
-                    <span
-                      v-for="tagName in skin.tagNames"
-                      :key="tagName"
-                      class="work-tag"
-                    >
-                      {{ tagName }}
-                    </span>
-                  </div>
-                  <!-- 统计信息显示区域 -->
-                  <div class="work-stats-display">
-                    <div class="stats-item views">
-                      <FaIcon name="i-mdi:eye" class="stats-icon"/>
-                      <span class="stats-number">{{ formatNumber(skin.viewCount) }}</span>
-                    </div>
-                    <div class="stats-item likes clickable" @click.stop="likeSkin(skin)">
-                      <FaIcon name="i-mdi:heart" :class="['stats-icon', { liked: skin.liked }]"/>
-                      <span class="stats-number">{{ formatNumber(skin.likeCount) }}</span>
-                    </div>
-                  </div>
-                </div>
-
+                <div class="post-time">{{ guide.createTimeFormat }}</div>
               </div>
             </div>
           </div>
 
           <!-- 分页 -->
-          <div class="pagination">
+          <div class="pagination-container">
             <ElPagination :current-page="postQuery.pageNum"
                           :total="skinCount"
                           :page-size="postQuery.pageSize"
@@ -642,310 +680,178 @@ onMounted(() => {
 
 .content-main {
   background: white;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.works-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.work-card {
-  background: white;
-  border-radius: 12px;
+  border-radius: 8px;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid #d9d9d9;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 攻略列表样式 - 参考贴吧设计 */
+.guide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.guide-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #d9d9d9;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
 }
 
-.work-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+.guide-item:last-child {
+  border-bottom: none;
 }
 
-.work-card:active {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+.guide-item:hover {
+  background-color: #f8f9fa;
 }
 
-.work-image {
-  position: relative;
-  width: 100%;
-  height: 200px;
-  overflow: hidden;
-  background: #f8f9fa;
+.guide-item:last-child {
+  border-bottom: none;
 }
 
-.cover-img {
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-  transition: transform 0.3s ease;
-}
-
-.work-card:hover .cover-img {
-  transform: scale(1.05);
-}
-
-.work-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 12px;
-}
-
-.work-card:hover .work-overlay {
-  opacity: 1;
-}
-
-.overlay-hint {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  color: white;
-  text-align: center;
-}
-
-.hint-icon {
-  font-size: 32px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-}
-
-.hint-text {
-  font-size: 14px;
-  font-weight: 600;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-
-.work-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.action-btn {
-  width: 32px;
-  height: 32px;
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  border-radius: 50%;
-  color: white;
-  cursor: pointer;
+/* 左侧序号 */
+.guide-number {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-}
-
-.action-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.1);
-}
-
-.action-btn .liked {
-  color: #f56c6c;
-}
-
-.work-info {
-  padding: 12px;
-  position: relative;
-}
-
-.work-title {
-  font-size: 15px;
+  width: 40px;
+  height: 40px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 14px;
   font-weight: 600;
-  color: #333;
-  margin: 0 0 8px 0;
+  color: #666;
+  flex-shrink: 0;
+}
+
+/* 中间内容区 */
+.guide-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.guide-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.guide-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e88e5;
+  margin: 0;
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  flex: 1;
+  cursor: pointer;
+  transition: color 0.2s ease;
 }
 
-.work-meta {
+.guide-title:hover {
+  color: #1565c0;
+  text-decoration: underline;
+}
+
+.guide-badges {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.badge.sticky {
+  background: #409eff;
+  color: white;
+}
+
+.badge.featured {
+  background: #f56c6c;
+  color: white;
+}
+
+.guide-preview {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   margin-bottom: 8px;
 }
 
-.author-info {
+.guide-images {
   display: flex;
-  align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.author-avatar {
+.preview-image {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+}
+
+/* 右侧信息 */
+.guide-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.guide-meta .author-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.guide-meta .author-avatar {
   width: 24px;
   height: 24px;
   border-radius: 50%;
   object-fit: cover;
 }
 
-.author-name {
+.guide-meta .author-name {
   font-size: 12px;
   color: #666;
+  font-weight: 500;
 }
 
-.work-date {
+.post-time {
   font-size: 12px;
   color: #999;
-}
-
-/* 标签和统计信息行样式 */
-.work-tags-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.work-tags {
-  display: flex;
-  gap: 6px;
-  flex-wrap: nowrap;
-  flex: 1;
-  overflow: hidden;
-}
-
-.work-tag {
-  padding: 2px 8px;
-  background: #f0f9ff;
-  color: #409eff;
-  border-radius: 10px;
-  font-size: 11px;
-  border: 1px solid #b3d8ff;
-}
-
-/* 统计信息显示区域样式 */
-.work-stats-display {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.stats-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  color: white;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  min-width: 50px;
-  justify-content: center;
-}
-
-.stats-item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
-  pointer-events: none;
-}
-
-.stats-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-}
-
-/* 浏览数样式 */
-.stats-item.views {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
-}
-
-/* 点赞数样式 */
-.stats-item.likes {
-  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-  box-shadow: 0 4px 15px rgba(250, 112, 154, 0.4);
-}
-
-.stats-item.clickable {
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.stats-item.clickable:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-}
-
-.stats-icon.liked {
-  color: #ff4757;
-  animation: heartBeat 0.6s ease-in-out;
-}
-
-/* 下载数样式 */
-.stats-item.downloads {
-  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-  box-shadow: 0 4px 15px rgba(168, 237, 234, 0.4);
-}
-
-.stats-icon {
-  font-size: 12px;
-  opacity: 0.9;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
-  position: relative;
-  z-index: 1;
-}
-
-.stats-number {
-  font-size: 11px;
-  font-weight: 700;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  letter-spacing: 0.3px;
-  position: relative;
-  z-index: 1;
-}
-
-/* 位置信息样式 */
-.work-location {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
-  background: #f0f9ff;
-  border-radius: 4px;
-  border: 1px solid #b3d8ff;
-}
-
-.location-icon {
-  font-size: 10px;
-  color: #409eff;
-}
-
-.location-text {
-  font-size: 10px;
-  color: #409eff;
-  font-weight: 500;
 }
 
 /* 右下角点赞按钮样式 */
@@ -1000,10 +906,15 @@ onMounted(() => {
   }
 }
 
+.pagination-container {
+  padding: 20px;
+  background: white;
+  border-top: 1px solid #e8e8e8;
+}
+
 .pagination {
   display: flex;
   justify-content: center;
-  padding: 16px 0;
 }
 
 
@@ -1267,9 +1178,28 @@ onMounted(() => {
     height: 18px;
   }
 
-  .works-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+  .guide-item {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 0;
+  }
+  
+  .guide-number {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+  
+  .guide-meta {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .guide-meta .author-info {
+    margin-bottom: 0;
   }
 
   .modal-body {
