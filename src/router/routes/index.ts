@@ -157,6 +157,23 @@ const routes: any[] = [
           title: '公告',
           breadLevel: 0,
         },
+      }, {
+        path: '/notice-upload',
+        name: 'noticeUpload',
+        component: () => import('@/views/bbs/notice/upload.vue'),
+        meta: {
+          showInMenu: false,
+          title: '上传公告'
+        },
+      },
+      {
+        path: '/notice/detail/:id',
+        name: 'noticeDetail',
+        component: () => import('@/views/bbs/notice/detail.vue'),
+        meta: {
+          showInMenu: false,
+          title: '公告详情'
+        },
       },
     ],
   },
@@ -175,9 +192,26 @@ const routes: any[] = [
           title: '活动',
           breadLevel: 0,
         },
+      }, {
+        path: '/event-upload',
+        name: 'eventUpload',
+        component: () => import('@/views/bbs/event/upload.vue'),
+        meta: {
+          showInMenu: false,
+          title: '上传活动'
+        },
+      },
+      {
+        path: '/event/detail/:id',
+        name: 'eventDetail',
+        component: () => import('@/views/bbs/event/detail.vue'),
+        meta: {
+          showInMenu: false,
+          title: '活动详情'
+        },
       },
     ],
-  },
+  }
 ]
 
 export default routes

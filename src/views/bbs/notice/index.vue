@@ -1,823 +1,1110 @@
+<script setup lang="ts">
+import {ref, onMounted} from 'vue'
+import {useRouter} from 'vue-router'
+import {gameHotListApi} from "@/api/game";
+import type {GameVo} from "@/api/game/types.ts";
+import {dictOptionsApi} from "@/api/common";
+import {postPageApi} from "@/api/bbs/post";
+import type {PostQuery, PostVo} from "@/api/bbs/post/types.ts";
+
+const router = useRouter()
+
+// 外形列表数据
+const skinList = reactive<PostVo[]>([]);
+const skinCount = ref(0)
+
+const postQuery = reactive<PageQuery<PostQuery>>({
+  pageNum: 1,
+  pageSize: 15,
+  sort: 'createTime',
+  order: 'desc',
+  query: {
+    gameId: '',
+    tags: [],
+  }
+})
+
+const viewSkin = (skin: PostVo) => {
+  // 跳转到外形详情页面
+  router.push(`/guide/detail/${skin.id}`)
+}
+
+// 移除点赞功能，保持列表简洁
+
+const handleSizeChange = (pageSize: number) => {
+  postQuery.pageSize = pageSize
+  postQuery.pageNum = 1
+  handleSearch()
+}
+
+const handleCurrentChange = (pageNum: number) => {
+  postQuery.pageNum = pageNum
+  handleSearch()
+}
+
+const formatNumber = (num: number) => {
+  if (num >= 10000) {
+    return (num / 10000).toFixed(1) + 'w'
+  } else if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'k'
+  }
+  return num.toString()
+}
+
+// 从content中提取第一张图片
+const extractFirstImage = (content: string) => {
+  if (!content) return null
+  
+  // 匹配img标签的src属性
+  const imgRegex = /<img[^>]+src\s*=\s*["']([^"']+)["'][^>]*>/i
+  const match = content.match(imgRegex)
+  
+  if (match && match[1]) {
+    return match[1]
+  }
+  
+  // 如果没有找到img标签，尝试匹配其他可能的图片格式
+  const urlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp|bmp))/i
+  const urlMatch = content.match(urlRegex)
+  
+  if (urlMatch && urlMatch[1]) {
+    return urlMatch[1]
+  }
+  
+  return null
+}
+
+// 清理HTML内容，移除标签和实体符号
+const cleanHtmlContent = (content: string) => {
+  if (!content) return '暂无内容预览'
+  
+  // 移除HTML标签
+  let cleanContent = content.replace(/<[^>]*>/g, '')
+  
+  // 替换HTML实体符号
+  cleanContent = cleanContent
+    .replace(/&nbsp;/g, ' ')           // 非断行空格
+    .replace(/&amp;/g, '&')            // &符号
+    .replace(/&lt;/g, '<')             // 小于号
+    .replace(/&gt;/g, '>')             // 大于号
+    .replace(/&quot;/g, '"')           // 双引号
+    .replace(/&#39;/g, "'")            // 单引号
+    .replace(/&apos;/g, "'")           // 单引号
+    .replace(/&hellip;/g, '...')       // 省略号
+    .replace(/&mdash;/g, '—')          // 长破折号
+    .replace(/&ndash;/g, '–')          // 短破折号
+    .replace(/&copy;/g, '©')           // 版权符号
+    .replace(/&reg;/g, '®')            // 注册商标
+    .replace(/&trade;/g, '™')          // 商标符号
+  
+  // 清理多余的空格和换行
+  cleanContent = cleanContent
+    .replace(/\s+/g, ' ')              // 多个空格替换为单个空格
+    .replace(/\n\s*\n/g, '\n')         // 多个换行替换为单个换行
+    .trim()                            // 去除首尾空格
+  
+  // 截取前100个字符
+  if (cleanContent.length > 100) {
+    cleanContent = cleanContent.substring(0, 100) + '...'
+  }
+  
+  return cleanContent
+}
+
+// 游戏选择相关方法
+const toggleGame = (gameId: string) => {
+  if (postQuery.query.gameId && postQuery.query.gameId === gameId) {
+    postQuery.query.gameId = ''
+  } else {
+    postQuery.query.gameId = gameId
+  }
+  handleSearch()
+}
+
+// 标签选择相关方法
+const toggleType = (value: string) => {
+  if (postQuery.query.tags) {
+    const index = postQuery.query.tags.indexOf(value)
+    if (index > -1) {
+      postQuery.query.tags.splice(index, 1)
+    } else {
+      postQuery.query.tags.push(value)
+    }
+    handleSearch()
+  }
+}
+
+// 加载游戏
+const gameList = ref<GameVo[]>();
+const loadGames = () => {
+  gameHotListApi().then(({data}) => {
+    gameList.value = data;
+  });
+}
+
+// 加载外形标签
+const typeList = ref<Options[]>();
+const loadSkinTypes = () => {
+  dictOptionsApi("bbs_guide_type").then(({data}) => {
+    typeList.value = data;
+  })
+}
+
+const handSort = (sort: string) => {
+  postQuery.sort = sort
+  handleSearch()
+}
+
+// 查询外形列表
+const handleSearch = () => {
+  postQuery.query.plate = 'guide' // 攻略专区使用plate=guide
+  skinList.length = 0
+  skinCount.value = 0
+  postPageApi(postQuery).then(({data}) => {
+    Object.assign(skinList, data.rows)
+    skinCount.value = Number(data.total)
+  });
+}
+
+// 跳转到上传外形页面
+const goToUpload = () => {
+  router.push('/guide-upload')
+}
+
+onMounted(() => {
+  loadGames()
+  loadSkinTypes()
+  handleSearch()
+})
+</script>
+
+
 <template>
-  <div class="forum-container">
-    <!-- 公共头部导航 -->
-    <AppHeader
-      ref="appHeaderRef"
-      @go-to-login="goToLogin"
-      @go-to-profile="goToProfile"
-    />
-
+  <div class="notice-container">
+    <!-- 背景装饰 -->
+    <div class="background-decoration"></div>
+    
     <!-- 主要内容区域 -->
-    <div class="forum-content">
-
-
-      <!-- 论坛导航 -->
-      <div class="forum-nav">
-        <div class="nav-tabs">
+    <div class="main-content">
+      <div class="content-wrapper">
+        <!-- 公告列表 -->
+        <div class="notice-list">
           <div
-            v-for="tab in forumTabs"
-            :key="tab.key"
-            :class="['nav-tab', { active: activeTab === tab.key }]"
-            @click="activeTab = tab.key"
+            v-for="(notice, index) in noticeList"
+            :key="notice.id"
+            class="notice-item"
+            @click="viewNotice(notice)"
           >
-            <FaIcon :name="tab.icon" class="tab-icon"/>
-            <span>{{ tab.name }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 论坛内容区域 -->
-      <div class="forum-main">
-        <!-- 左侧内容 -->
-        <div class="forum-left">
-          <!-- 热门话题 -->
-          <div class="section">
-            <div class="section-header">
-              <h3 class="section-title">
-                <FaIcon name="i-mdi:fire" class="title-icon"/>
-                热门话题
-              </h3>
-              <span class="more-link">更多</span>
+            <!-- 左侧分类标签 -->
+            <div class="category-badge">
+              <span class="badge-text">{{ notice.category }}</span>
             </div>
-            <div class="topics-list">
-              <div
-                v-for="topic in hotTopics"
-                :key="topic.id"
-                class="topic-item"
-                @click="viewTopic(topic)"
-              >
-                <div class="topic-rank" :class="`rank-${topic.rank}`">{{ topic.rank }}</div>
-                <div class="topic-content">
-                  <h4 class="topic-title">{{ topic.title }}</h4>
-                  <div class="topic-meta">
-                    <span class="topic-author">{{ topic.author }}</span>
-                    <span class="topic-time">{{ formatDate(topic.createTime) }}</span>
-                    <span class="topic-views">{{ topic.views }} 浏览</span>
-                  </div>
-                </div>
-                <div class="topic-stats">
-                  <div class="stat-item">
-                    <FaIcon name="i-mdi:thumb-up" class="stat-icon"/>
-                    <span>{{ topic.likes }}</span>
-                  </div>
-                  <div class="stat-item">
-                    <FaIcon name="i-mdi:comment" class="stat-icon"/>
-                    <span>{{ topic.replies }}</span>
-                  </div>
-                </div>
-              </div>
+            
+            <!-- 中间标题 -->
+            <div class="notice-title">
+              {{ notice.title }}
             </div>
-          </div>
-
-          <!-- 最新帖子 -->
-          <div class="section">
-            <div class="section-header">
-              <h3 class="section-title">
-                <FaIcon name="i-mdi:new-box" class="title-icon"/>
-                最新帖子
-              </h3>
-            </div>
-            <div class="posts-list">
-              <div
-                v-for="post in latestPosts"
-                :key="post.id"
-                class="post-item"
-                @click="viewPost(post)"
-              >
-                <div class="post-avatar">
-                  <img :src="post.author.avatar" :alt="post.author.name" class="avatar-img"/>
-                </div>
-                <div class="post-content">
-                  <h4 class="post-title">{{ post.title }}</h4>
-                  <p class="post-excerpt">{{ post.excerpt }}</p>
-                  <div class="post-meta">
-                    <span class="post-author">{{ post.author.name }}</span>
-                    <span class="post-time">{{ formatDate(post.createTime) }}</span>
-                    <span class="post-category">{{ post.category }}</span>
-                  </div>
-                </div>
-                <div class="post-stats">
-                  <div class="stat-item">
-                    <FaIcon name="i-mdi:eye" class="stat-icon"/>
-                    <span>{{ post.views }}</span>
-                  </div>
-                  <div class="stat-item">
-                    <FaIcon name="i-mdi:comment" class="stat-icon"/>
-                    <span>{{ post.replies }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 右侧边栏 -->
-        <div class="forum-sidebar">
-
-
-
-
-          <!-- 热门标签 -->
-          <div class="hot-tags">
-            <div class="card-header">
-              <h4>
-                <FaIcon name="i-mdi:tag" class="header-icon"/>
-                热门标签
-              </h4>
-            </div>
-            <div class="tags-list">
-              <span
-                v-for="tag in hotTags"
-                :key="tag.name"
-                class="tag-item"
-                @click="searchByTag(tag.name)"
-              >
-                {{ tag.name }}
-                <span class="tag-count">({{ tag.count }})</span>
-              </span>
-            </div>
-          </div>
-
-          <!-- 论坛统计 -->
-          <div class="forum-stats">
-            <div class="card-header">
-              <h4>
-                <FaIcon name="i-mdi:chart-line" class="header-icon"/>
-                论坛统计
-              </h4>
-            </div>
-            <div class="stats-grid">
-              <div class="stat-card">
-                <div class="stat-number">{{ forumStats.totalPosts }}</div>
-                <div class="stat-label">总帖子</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-number">{{ forumStats.totalUsers }}</div>
-                <div class="stat-label">注册用户</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-number">{{ forumStats.todayPosts }}</div>
-                <div class="stat-label">今日发帖</div>
-              </div>
-
+            
+            <!-- 右侧日期 -->
+            <div class="notice-date">
+              [{{ notice.date }}]
             </div>
           </div>
         </div>
       </div>
     </div>
-
-
-
-    <!-- 个人信息弹窗 -->
-    <Profile
-      v-model:visible="showProfileModal"
-      @open-personal-center="handleOpenPersonalCenter"
-    />
-
-    <!-- 个人中心页面 -->
-    <PersonalCenter
-      v-model:visible="showPersonalCenterModal"
-    />
-
-    <!-- 公共底部 -->
-    <AppFooter />
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import AppHeader from '@/components/AppHeader/index.vue'
-import AppFooter from '@/components/AppFooter/index.vue'
-
-import Profile from '@/views/user/profile.vue'
-import PersonalCenter from '@/views/user/personal-center.vue'
-import { useUserStore } from '@/store/modules/user.ts'
-import { useShareStore } from '@/store/modules/share.ts'
-
-const router = useRouter()
-const userStore = useUserStore()
-const shareStore = useShareStore()
-
-// 响应式数据
-const appHeaderRef = ref()
-
-const showProfileModal = ref(false)
-const showPersonalCenterModal = ref(false)
-const activeTab = ref('hot')
-
-
-
-// 论坛标签页
-const forumTabs = ref([
-  { key: 'hot', name: '热门', icon: 'i-mdi:fire' },
-  { key: 'latest', name: '最新', icon: 'i-mdi:new-box' },
-  { key: 'discussion', name: '讨论', icon: 'i-mdi:forum' },
-  { key: 'guide', name: '攻略', icon: 'i-mdi:book-open' },
-  { key: 'news', name: '资讯', icon: 'i-mdi:newspaper' }
-])
-
-// 热门话题数据
-const hotTopics = ref([
-  {
-    id: 1,
-    rank: 1,
-    title: '《失落的方舟》新版本更新内容详解',
-    author: '游戏达人',
-    createTime: '2025-01-15 10:30:00',
-    views: 12580,
-    likes: 256,
-    replies: 89
-  },
-  {
-    id: 2,
-    rank: 2,
-    title: '新手必看！职业选择指南',
-    author: '攻略大师',
-    createTime: '2025-01-15 09:15:00',
-    views: 9876,
-    likes: 189,
-    replies: 67
-  },
-  {
-    id: 3,
-    rank: 3,
-    title: '公会战攻略分享',
-    author: '战斗专家',
-    createTime: '2025-01-15 08:45:00',
-    views: 7654,
-    likes: 145,
-    replies: 52
-  },
-  {
-    id: 4,
-    rank: 4,
-    title: '装备强化技巧大全',
-    author: '强化达人',
-    createTime: '2025-01-15 07:20:00',
-    views: 6543,
-    likes: 123,
-    replies: 41
-  },
-  {
-    id: 5,
-    rank: 5,
-    title: 'PVP竞技场心得分享',
-    author: '竞技高手',
-    createTime: '2025-01-15 06:30:00',
-    views: 5432,
-    likes: 98,
-    replies: 35
-  }
-])
-
-// 最新帖子数据
-const latestPosts = ref([
-  {
-    id: 1,
-    title: '分享一个超实用的游戏技巧',
-    excerpt: '今天发现了一个非常实用的游戏技巧，分享给大家...',
-    author: {
-      name: '技巧分享者',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=1'
-    },
-    createTime: '2025-01-15 11:20:00',
-    category: '技巧分享',
-    views: 1234,
-    replies: 23
-  },
-  {
-    id: 2,
-    title: '新版本BUG反馈',
-    excerpt: '发现了一个新版本的BUG，希望官方能尽快修复...',
-    author: {
-      name: 'BUG猎人',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=2'
-    },
-    createTime: '2025-01-15 11:15:00',
-    category: 'BUG反馈',
-    views: 987,
-    replies: 15
-  },
-  {
-    id: 3,
-    title: '公会招募新成员',
-    excerpt: '我们公会正在招募活跃玩家，欢迎加入...',
-    author: {
-      name: '公会会长',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=3'
-    },
-    createTime: '2025-01-15 11:10:00',
-    category: '公会招募',
-    views: 756,
-    replies: 8
-  },
-  {
-    id: 4,
-    title: '游戏截图分享',
-    excerpt: '今天拍了一些漂亮的游戏截图，分享给大家...',
-    author: {
-      name: '截图达人',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=4'
-    },
-    createTime: '2025-01-15 11:05:00',
-    category: '截图分享',
-    views: 543,
-    replies: 12
-  },
-  {
-    id: 5,
-    title: '装备交易信息',
-    excerpt: '出售一些多余装备，价格合理，有意者联系...',
-    author: {
-      name: '装备商人',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=5'
-    },
-    createTime: '2025-01-15 11:00:00',
-    category: '装备交易',
-    views: 432,
-    replies: 6
-  }
-])
-
-
-
-// 热门标签数据
-const hotTags = ref([
-  { name: '失落的方舟', count: 1256 },
-  { name: '攻略', count: 987 },
-  { name: '装备', count: 876 },
-  { name: '公会', count: 765 },
-  { name: 'PVP', count: 654 },
-  { name: '新手', count: 543 },
-  { name: '技巧', count: 432 },
-  { name: 'BUG', count: 321 },
-  { name: '活动', count: 210 },
-  { name: '交易', count: 198 }
-])
-
-// 论坛统计数据
-const forumStats = ref({
-  totalPosts: 125680,
-  totalUsers: 45678,
-  todayPosts: 234
-})
-
-// 计算属性
-const isLoggedIn = computed(() => {
-  return userStore.isLoggedIn
-})
-
-// 方法
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  const minutes = Math.floor(diff / (1000 * 60))
-  const hours = Math.floor(diff / (1000 * 60 * 60))
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-
-  if (minutes < 60) {
-    return `${minutes}分钟前`
-  } else if (hours < 24) {
-    return `${hours}小时前`
-  } else if (days < 7) {
-    return `${days}天前`
-  } else {
-    return date.toLocaleDateString()
-  }
-}
-
-
-
-const goToProfile = () => {
-  if (isLoggedIn.value) {
-    showProfileModal.value = true
-  }
-}
-
-
-
-const handleOpenPersonalCenter = () => {
-  showPersonalCenterModal.value = true
-}
-
-const viewTopic = (topic: any) => {
-  console.log('查看话题:', topic)
-  ElMessage.info(`查看话题: ${topic.title}`)
-}
-
-const viewPost = (post: any) => {
-  console.log('查看帖子:', post)
-  ElMessage.info(`查看帖子: ${post.title}`)
-}
-
-const searchByTag = (tagName: string) => {
-  console.log('按标签搜索:', tagName)
-  ElMessage.info(`搜索标签: ${tagName}`)
-}
-
-onMounted(() => {
-  console.log('论坛页面已加载')
-})
-</script>
-
 <style scoped>
-.forum-container {
+.skin-design-container {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding-top: 60px; /* 为固定导航栏留出空间 */
-  padding-bottom: 50px; /* 为固定底部留出空间 */
-  overflow-x: hidden; /* 防止水平滚动 */
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
-.forum-content {
+.sort-upload-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.filter-section {
+  background: white;
+  border-bottom: 1px solid #e4e7ed;
+  padding: 8px 0;
+}
+
+.filter-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
-}
-
-
-
-/* 论坛导航样式 */
-.forum-nav {
-  margin-bottom: 30px;
-}
-
-.nav-tabs {
-  display: flex;
-  background: white;
-  border-radius: 12px;
-  padding: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.nav-tab {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 500;
-}
-
-.nav-tab:hover {
-  background: #f0f0f0;
-}
-
-.nav-tab.active {
-  background: #007bff;
-  color: white;
-}
-
-.tab-icon {
-  margin-right: 8px;
-  font-size: 16px;
-}
-
-/* 论坛主内容样式 */
-.forum-main {
-  display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 30px;
-}
-
-.forum-left {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.section {
-  margin-bottom: 40px;
-}
-
-.section:last-child {
-  margin-bottom: 0;
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #f0f0f0;
-}
-
-.section-title {
-  display: flex;
-  align-items: center;
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-  margin: 0;
-}
-
-.title-icon {
-  margin-right: 8px;
-  color: #007bff;
-}
-
-.more-link {
-  color: #007bff;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.more-link:hover {
-  text-decoration: underline;
-}
-
-/* 热门话题样式 */
-.topics-list {
+  padding: 0 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
 }
 
-.topic-item {
+.search-filter-row {
   display: flex;
   align-items: center;
-  padding: 16px;
-  border: 1px solid #f0f0f0;
-  border-radius: 8px;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 400px;
+  max-width: 800px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #909399;
+  font-size: 20px;
+}
+
+.search-input {
+  width: 80%;
+  padding: 12px 16px 12px 12px;
+  border: 2px solid #e4e7ed;
+  border-radius: 20px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #409eff;
+  background: white;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 12px;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  overflow-x: auto;
+}
+
+.filter-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: 2px solid #e4e7ed;
+  background: white;
+  border-radius: 25px;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-size: 14px;
+  color: #606266;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 120px;
 }
 
-.topic-item:hover {
-  border-color: #007bff;
-  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+.filter-tab:hover {
+  background: #f8f9fa;
+  border-color: #c0c4cc;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.topic-rank {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+.filter-tab.active {
+  background: #409eff;
+  color: white;
+  border-color: #409eff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+}
+
+/* 全部按钮的标签样式 */
+.filter-tab.tag-like {
+  background: #f0f9ff;
+  color: #409eff;
+  border: 1px solid #b3d8ff;
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  min-width: 50px;
+  box-shadow: none;
+  transform: none;
+}
+
+.filter-tab.tag-like:hover {
+  background: #e1f5fe;
+  border-color: #81d4fa;
+  transform: none;
+  box-shadow: 0 2px 4px rgba(64, 158, 255, 0.2);
+}
+
+.filter-tab.tag-like.active {
+  background: #409eff;
+  color: white;
+  border-color: #409eff;
+  transform: none;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+}
+
+
+/* 游戏选择按钮样式 */
+.game-selector {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  color: white;
-  margin-right: 16px;
-  flex-shrink: 0;
+  justify-content: flex-start;
+  margin-bottom: 8px;
 }
 
-.rank-1 { background: #ff6b6b; }
-.rank-2 { background: #ffa726; }
-.rank-3 { background: #ffca28; }
-.rank-4, .rank-5 { background: #66bb6a; }
-
-.topic-content {
-  flex: 1;
-  margin-right: 16px;
+.game-section {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  justify-content: flex-start;
 }
 
-.topic-title {
+.game-label {
   font-size: 16px;
   font-weight: 600;
   color: #333;
-  margin: 0 0 8px 0;
-  line-height: 1.4;
-}
-
-.topic-meta {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  font-size: 14px;
-  color: #666;
-}
-
-.topic-stats {
-  display: flex;
-  gap: 16px;
+  white-space: nowrap;
   flex-shrink: 0;
 }
 
-.stat-item {
+.game-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  padding: 8px 0;
+  overflow-x: auto;
+}
+
+.game-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 2px solid #e4e7ed;
+  background: white;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 13px;
+  color: #606266;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 100px;
+  width: 100%;
+}
+
+.game-btn:hover {
+  background: #f8f9fa;
+  border-color: #c0c4cc;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.game-btn.active {
+  background: #409eff;
+  color: white;
+  border-color: #409eff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+}
+
+.game-btn-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.game-btn-text {
+  font-size: 13px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  text-align: center;
+}
+
+/* 分类选择器样式 */
+.category-selector {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 8px;
+}
+
+/* 标签按钮容器样式 */
+.tag-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  padding: 8px 0;
+  overflow-x: auto;
+}
+
+/* 标签按钮样式 */
+.tag-btn {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 14px;
-  color: #666;
+  padding: 6px 12px;
+  border: 1px solid #e4e7ed;
+  background: #f8f9fa;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 12px;
+  color: #606266;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 60px;
 }
 
-.stat-icon {
+.tag-btn:hover {
+  background: #e9ecef;
+  border-color: #c0c4cc;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.tag-btn.active {
+  background: #409eff;
+  color: white;
+  border-color: #409eff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+}
+
+.tag-btn-text {
+  font-size: 12px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  text-align: center;
+}
+
+/* 排序按钮样式 */
+.sort-buttons {
+  display: flex;
+  align-items: center;
+  border: 2px solid #e4e7ed;
+  border-radius: 25px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sort-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: none;
+  background: white;
+  color: #909399;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 13px;
+  font-weight: 500;
+  border-right: 1px solid #e4e7ed;
+  min-width: 70px;
+  justify-content: center;
+}
+
+.sort-btn:last-child {
+  border-right: none;
+}
+
+.sort-btn:hover {
+  background: #f8f9fa;
+  color: #606266;
+  transform: translateY(-1px);
+}
+
+.sort-btn.active {
+  background: #409eff;
+  color: white;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+}
+
+.sort-icon {
   font-size: 16px;
 }
 
-/* 最新帖子样式 */
-.posts-list {
+.main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 20px;
+}
+
+.content-wrapper {
+  display: block;
+}
+
+.content-main {
+  background: white;
+  border-radius: 8px;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid #d9d9d9;
+  overflow: hidden;
+}
+
+/* 攻略列表样式 - 参考贴吧设计 */
+.guide-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 0;
 }
 
-.post-item {
+.guide-item {
   display: flex;
   align-items: flex-start;
-  padding: 16px;
-  border: 1px solid #f0f0f0;
-  border-radius: 8px;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #d9d9d9;
   cursor: pointer;
   transition: all 0.3s ease;
+  position: relative;
 }
 
-.post-item:hover {
-  border-color: #007bff;
-  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+.guide-item:last-child {
+  border-bottom: none;
 }
 
-.post-avatar {
-  margin-right: 16px;
+.guide-item:hover {
+  background-color: #f8f9fa;
+}
+
+.guide-item:last-child {
+  border-bottom: none;
+}
+
+/* 左侧序号 */
+.guide-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
   flex-shrink: 0;
 }
 
-.avatar-img {
-  width: 48px;
-  height: 48px;
+/* 中间内容区 */
+.guide-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.guide-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.guide-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e88e5;
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.guide-title:hover {
+  color: #1565c0;
+  text-decoration: underline;
+}
+
+.guide-badges {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.badge.sticky {
+  background: #409eff;
+  color: white;
+}
+
+.badge.featured {
+  background: #f56c6c;
+  color: white;
+}
+
+.guide-preview {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.guide-images {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.preview-image {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+}
+
+/* 右侧信息 */
+.guide-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.guide-meta .author-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.guide-meta .author-avatar {
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   object-fit: cover;
 }
 
-.post-content {
-  flex: 1;
-  margin-right: 16px;
-}
-
-.post-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 8px 0;
-  line-height: 1.4;
-}
-
-.post-excerpt {
-  font-size: 14px;
+.guide-meta .author-name {
+  font-size: 12px;
   color: #666;
-  margin: 0 0 8px 0;
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  font-weight: 500;
 }
 
-.post-meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.post-time {
   font-size: 12px;
   color: #999;
 }
 
-.post-category {
-  background: #f0f0f0;
-  padding: 2px 8px;
-  border-radius: 4px;
-  color: #666;
-}
-
-.post-stats {
+/* 右下角点赞按钮样式 */
+.corner-like {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
 }
 
-/* 右侧边栏样式 */
-.forum-sidebar {
+.corner-like:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.like-icon {
+  font-size: 16px;
+  color: #999;
+  transition: all 0.3s ease;
+}
+
+.like-icon.liked {
+  color: #ff4757;
+  animation: heartBeat 0.6s ease-in-out;
+}
+
+@keyframes heartBeat {
+  0% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.3);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.3);
+  }
+  70% {
+    transform: scale(1);
+  }
+}
+
+.pagination-container {
+  padding: 20px;
+  background: white;
+  border-top: 1px solid #e8e8e8;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+}
+
+
+.work-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: scale(1.1);
+}
+
+.modal-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.modal-image {
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.modal-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.modal-info {
+  padding: 30px;
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.user-card,
-.online-users,
-.hot-tags,
-.forum-stats {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.card-header {
-  margin-bottom: 16px;
-}
-
-.card-header h4 {
-  display: flex;
-  align-items: center;
-  font-size: 16px;
-  font-weight: 600;
+.modal-title {
+  font-size: 24px;
+  font-weight: 700;
   color: #333;
   margin: 0;
 }
 
-.header-icon {
-  margin-right: 8px;
-  color: #007bff;
+.modal-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
+.modal-author-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
 
-
-
-
-/* 热门标签样式 */
-.tags-list {
+.modal-author-info {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modal-author-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.modal-author-level {
+  font-size: 12px;
+  color: #409eff;
+  background: #f0f9ff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  width: fit-content;
+}
+
+.modal-description {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+}
+
+.modal-stats {
+  display: flex;
+  gap: 20px;
+}
+
+.modal-stats .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #666;
+  font-size: 14px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
   gap: 8px;
 }
 
-.tag-item {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 12px;
-  background: #f0f0f0;
-  border-radius: 16px;
-  font-size: 12px;
-  color: #666;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.tag-item:hover {
-  background: #007bff;
+.btn-primary {
+  background: linear-gradient(135deg, #409eff, #337ecc);
   color: white;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 14px;
+  min-width: 120px;
+  justify-content: center;
 }
 
-.tag-count {
-  margin-left: 4px;
-  opacity: 0.7;
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(64, 158, 255, 0.5);
+  background: linear-gradient(135deg, #337ecc, #2c6bb3);
 }
 
-/* 论坛统计样式 */
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+.btn-secondary {
+  background: white;
+  color: #606266;
+  border: 2px solid #dcdfe6;
 }
 
-.stat-card {
-  text-align: center;
-  padding: 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
+.btn-secondary:hover {
+  background: #f5f7fa;
+  border-color: #c0c4cc;
 }
 
-.stat-number {
-  font-size: 24px;
-  font-weight: bold;
-  color: #007bff;
-  margin-bottom: 4px;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: #666;
-}
-
-/* 响应式设计 */
 @media (max-width: 768px) {
-  .forum-main {
-    grid-template-columns: 1fr;
+  .bbs-header .header-content {
+    padding: 0 10px;
   }
 
-  .nav-tabs {
-    flex-wrap: wrap;
+  .bbs-header .logo {
+    margin-left: 0;
   }
 
-  .nav-tab {
-    flex: 1 1 calc(50% - 4px);
-    margin-bottom: 8px;
+  .bbs-header .nav-menu {
+    display: none;
   }
 
-  .topic-item,
-  .post-item {
+  .page-header {
+    top: 60px;
+  }
+
+  .content-wrapper {
+    display: block;
+  }
+
+  .header-content {
+    flex-direction: column;
+    height: auto;
+    padding: 16px 20px;
+    gap: 16px;
+  }
+
+  .filter-content {
+    gap: 12px;
+  }
+
+  .search-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .search-box {
+    min-width: auto;
+  }
+
+  .sort-buttons {
+    justify-content: center;
+  }
+
+  .sort-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .game-section {
     flex-direction: column;
     align-items: flex-start;
+    gap: 8px;
   }
 
-  .topic-rank {
-    margin-bottom: 12px;
+  .category-selector {
+    justify-content: flex-start;
   }
 
-  .post-avatar {
-    margin-bottom: 12px;
+  .game-label {
+    font-size: 13px;
   }
 
-  .stats-grid {
+  .game-buttons {
+    gap: 6px;
+  }
+
+  .game-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .game-btn-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .guide-item {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 0;
+  }
+  
+  .guide-number {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+  
+  .guide-meta {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .guide-meta .author-info {
+    margin-bottom: 0;
+  }
+
+  .modal-body {
     grid-template-columns: 1fr;
+  }
+
+  .modal-info {
+    padding: 20px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
   }
 }
 </style>
