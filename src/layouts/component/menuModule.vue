@@ -46,7 +46,7 @@ const routesList = computed(() => {
     return hasLevel1
   })
   const val = ref<any>([])
-  return routes.map((option: any) => {
+  const result = routes.map((option: any) => {
     if (!option.path) {
       val.value.push(...option.children)
     }
@@ -71,6 +71,8 @@ const routesList = computed(() => {
       }
     }
   })
+  
+  return result
 })
 
 // 监听路由变化，自动更新active状态
@@ -89,6 +91,7 @@ initMenu()
       :collapse="false"
       :collapse-transition="false"
       mode="horizontal"
+      :ellipsis="false"
       v-bind="$attrs"
       @select="handleSelect"
     >
@@ -102,32 +105,103 @@ initMenu()
    background: #fff;
    padding: 0 0 0;
    border-radius: 8px;
+   width: 100%;
+   overflow: visible;
    .icon-img{
       margin-right: 7px;
    }
    :deep(.el-menu-item){
       height: 60px;
       line-height: 60px;
+      display: inline-block;
+      visibility: visible;
+      opacity: 1;
+      min-width: 80px;
+      flex-shrink: 0;
    }
    :deep(.el-sub-menu .el-menu-item){
       min-width: 160px;
       height: 60px;
       line-height: 60px;
       padding-left: 45px;
+      display: block;
+      visibility: visible;
+      opacity: 1;
    }
    :deep(.el-menu){
       border-radius: 8px;
       border-right: 0px;
+      display: flex;
+      flex-wrap: nowrap;
+      overflow: visible;
+      width: 100%;
+   }
+   :deep(.el-menu--horizontal) {
+      white-space: nowrap;
+      overflow: visible;
+   }
+   :deep(.el-menu--horizontal .el-menu-item) {
+      white-space: nowrap;
+      flex-shrink: 0;
    }
    :deep(.el-sub-menu__title){
       height: 60px;
       line-height: 60px;
+      display: inline-block;
+      visibility: visible;
+      opacity: 1;
+      min-width: 80px;
+      flex-shrink: 0;
    }
    :deep(.el-menu > .el-menu-item.is-active){
-      background-color: #E0F0F3;
+      background-color: #f0f9ff;
+      color: #409eff;
+      border-bottom: none;
    }
    :deep(.el-menu > .el-sub-menu.is-active > .el-sub-menu__title) {
-      color: #1890ff;
+      color: #409eff;
+   }
+   :deep(.el-menu-item) {
+      border-bottom: none !important;
+      border: none !important;
+   }
+   :deep(.el-menu-item::after) {
+      display: none !important;
+   }
+   :deep(.el-menu-item::before) {
+      display: none !important;
+   }
+   :deep(.el-menu) {
+      border-bottom: none !important;
+   }
+   :deep(.el-menu-item[data-index="/event"]) {
+      display: inline-block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+   }
+   :deep(.el-sub-menu[data-index="/event"]) {
+      display: inline-block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+   }
+   :deep(.el-menu--horizontal .el-menu-item) {
+      display: inline-block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      width: auto !important;
+      min-width: 80px !important;
+   }
+   :deep(.el-menu--horizontal .el-sub-menu) {
+      display: inline-block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      width: auto !important;
+      min-width: 80px !important;
+   }
+   :deep(.el-menu--horizontal .el-sub-menu__title) {
+      display: inline-block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
    }
 }
 </style>

@@ -129,6 +129,7 @@ watch(
   padding: 0;
   color: #333;
   background: white;
+  border-bottom: 1px solid #e4e7ed;
 }
 
 .bbs-header .header-content {
@@ -139,6 +140,8 @@ watch(
   height: 60px;
   padding: 0 20px;
   margin: 0 auto;
+  overflow: visible;
+  position: relative;
 }
 
 .bbs-header .logo {
@@ -159,10 +162,15 @@ watch(
 }
 
 .bbs-header .nav-menu {
+  position: absolute;
+  left: 60%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   width: 60%;
-
-  /* display: flex;
-  gap: 30px; */
+  display: flex;
+  justify-content: center;
+  overflow: visible;
+  min-width: 500px;
 }
 
 .bbs-header .nav-item {

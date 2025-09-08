@@ -80,18 +80,27 @@ const changeLoginStatus = () => {
 
 <style lang="scss" scoped>
 .common-layout {
-  height: 100%;
+  min-height: 100vh;
   background: #fff;
+  display: flex;
+  flex-direction: column;
   .layout-header {
     width: 100%;
     height: 60px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
   }
   :deep(.el-footer) {
-    height: 40px !important;
+    height: auto !important;
+    flex-shrink: 0;
+    padding: 0 !important;
+    margin: 0 !important;
   }
   :deep(.el-main) {
-    background: #f5f5f5;
+    background: transparent;
+    padding: 0 !important;
+    margin: 0 !important;
+    flex: 1;
   }
 }
 </style>

@@ -180,35 +180,142 @@ onMounted(() => {
 
 
 <template>
-  <div class="notice-container">
-    <!-- 背景装饰 -->
-    <div class="background-decoration"></div>
-    
+  <div class="skin-design-container">
+    <!-- 筛选和搜索区域 -->
+    <div class="filter-section">
+      <div class="filter-content">
+        <!-- 第一排：热门游戏选择 -->
+        <div class="game-selector">
+          <div class="game-section">
+            <span class="game-label">游戏</span>
+            <div class="game-buttons">
+              <button
+                v-for="game in gameList"
+                :key="game.id"
+                :class="['game-btn', { active: postQuery.query.gameId === game.id }]"
+                @click="toggleGame(game.id)"
+              >
+                <img :src="game.gameIcon" :alt="game.gameName" class="game-btn-icon"/>
+                <span class="game-btn-text">{{ game.gameName }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 第二排：分类筛选标签 -->
+        <div class="category-selector">
+          <span class="category-label">标签&nbsp;&nbsp;&nbsp;&nbsp;</span>
+          <div class="tag-buttons">
+            <button
+              v-for="type in typeList"
+              :key="type.value"
+              :class="['tag-btn', { active: postQuery.query.tags?.includes(type.value) }]"
+              @click="toggleType(type.value)"
+            >
+              <span class="tag-btn-text">{{ type.label }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 第三排：搜索和排序 -->
+        <div class="search-filter-row">
+          <div class="search-box">
+            <input
+              v-model="postQuery.query.title"
+              type="text"
+              placeholder="搜索攻略..."
+              class="search-input"
+              @change="handleSearch"
+            />
+          </div>
+          <div class="sort-upload-group">
+            <div class="sort-buttons">
+              <button
+                :class="['sort-btn', { active: postQuery.sort === 'createTime' }]"
+                @click="handSort('createTime')"
+              >
+                <FaIcon name="i-mdi:clock-outline" class="sort-icon"/>
+                <span>最新</span>
+              </button>
+              <button
+                :class="['sort-btn', { active: postQuery.sort === 'likeCount' }]"
+                @click="handSort('likeCount')"
+              >
+                <FaIcon name="i-mdi:fire" class="sort-icon"/>
+                <span>最热</span>
+              </button>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-primary" @click="goToUpload">
+                <FaIcon name="i-mdi:plus"/>
+                发布攻略
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 主要内容区域 -->
     <div class="main-content">
       <div class="content-wrapper">
-        <!-- 公告列表 -->
-        <div class="notice-list">
-          <div
-            v-for="(notice, index) in noticeList"
-            :key="notice.id"
-            class="notice-item"
-            @click="viewNotice(notice)"
-          >
-            <!-- 左侧分类标签 -->
-            <div class="category-badge">
-              <span class="badge-text">{{ notice.category }}</span>
+        <!-- 内容区 -->
+        <div class="content-main">
+          <!-- 攻略列表 -->
+          <div class="guide-list">
+            <div
+              v-for="(guide, index) in skinList"
+              :key="guide.id"
+              class="guide-item"
+              @click="viewSkin(guide)"
+            >
+              <!-- 左侧序号 -->
+              <div class="guide-number">{{ skinList.length - index }}</div>
+              
+              <!-- 中间内容区 -->
+              <div class="guide-content">
+                <!-- 标题和标签 -->
+                <div class="guide-header">
+                  <h3 class="guide-title">{{ guide.title }}</h3>
+                  <div class="guide-badges">
+                    <span v-if="guide.isSticky" class="badge sticky">置顶</span>
+                    <span v-if="guide.isFeatured" class="badge featured">精</span>
+                  </div>
+                </div>
+                
+                <!-- 内容预览 -->
+                <div class="guide-preview">
+                  {{ cleanHtmlContent(guide.content) }}
+                </div>
+                
+                <!-- 图片预览 -->
+                <div v-if="extractFirstImage(guide.content)" class="guide-images">
+                  <img :src="extractFirstImage(guide.content)" :alt="guide.title" class="preview-image"/>
+                </div>
+              </div>
+              
+              <!-- 右侧信息 -->
+              <div class="guide-meta">
+                <div class="author-info">
+                  <img :src="guide.userAvatar" :alt="guide.userName" class="author-avatar"/>
+                  <span class="author-name">{{ guide.userName }}</span>
+                </div>
+                <div class="post-time">{{ guide.createTimeFormat }}</div>
+              </div>
             </div>
-            
-            <!-- 中间标题 -->
-            <div class="notice-title">
-              {{ notice.title }}
-            </div>
-            
-            <!-- 右侧日期 -->
-            <div class="notice-date">
-              [{{ notice.date }}]
-            </div>
+          </div>
+
+          <!-- 分页 -->
+          <div class="pagination-container">
+            <ElPagination :current-page="postQuery.pageNum"
+                          :total="skinCount"
+                          :page-size="postQuery.pageSize"
+                          :page-sizes="[15, 30, 45]"
+                          layout="total, sizes, prev, pager, next, jumper"
+                          class="pagination"
+                          background
+                          @current-change="handleCurrentChange"
+                          @size-change="handleSizeChange"/>
           </div>
         </div>
       </div>

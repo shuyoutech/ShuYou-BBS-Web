@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import {toast} from "vue-sonner";
+// import {toast} from "vue-sonner";
 
 const router = useRouter()
 
@@ -9,83 +9,75 @@ const router = useRouter()
 // const appHeaderRef = ref()
 
 // 响应式数据
-const currentFilter = ref('all')
-const currentPage = ref(1)
-const pageSize = ref(10)
+const currentNewsTab = ref('all')
 
-const totalPosts = ref(0)
-const hotPosts = ref<any[]>([])
-const activeUsers = ref<any[]>([])
-const banners = ref([
+// 专区统计数据
+const sectionStats = ref({
+  face: { views: 1256, comments: 89 },
+  appearance: { views: 892, comments: 67 },
+  guide: { views: 2156, comments: 156 },
+  notice: { views: 3456, comments: 234 },
+  event: { views: 1789, comments: 123 }
+})
+
+// 新闻标签
+const newsTabs = [
+  { key: 'all', label: '全部' },
+  { key: 'news', label: '新闻' },
+  { key: 'announcement', label: '公告' },
+  { key: 'activity', label: '活动' },
+]
+
+// 模拟新闻数据
+const mockNews = ref([
   {
     id: '1',
     title: '新版本更新公告',
-    image: 'https://picsum.photos/800/300?random=1',
-    link: '/bbs/post/1',
-    sort: 1,
-  },
-  {
-    id: '2',
-    title: '攻略征集活动',
-    image: 'https://picsum.photos/800/300?random=2',
-    link: '/bbs/post/2',
-    sort: 2,
-  },
-])
-
-// 模拟帖子数据
-const mockPosts = ref([
-  {
-    id: '1',
-    title: '欢迎来到书友论坛！',
-    content: '这是一个全新的论坛平台，欢迎大家在这里分享知识、交流经验。',
-    author: { nickname: '管理员', avatar: 'https://picsum.photos/50/50?random=1' },
-    category: 'news',
-    viewCount: 156,
-    commentCount: 23,
-    likeCount: 45,
+    content: '本次更新带来了全新的捏脸系统和更多自定义选项，快来体验吧！',
+    author: '管理员',
+    category: '公告',
     createTime: new Date().toISOString(),
   },
   {
     id: '2',
-    title: '如何提高编程效率？',
-    content: '分享一些提高编程效率的小技巧和工具推荐...',
-    author: { nickname: '程序员小王', avatar: 'https://picsum.photos/50/50?random=2' },
-    category: 'strategy',
-    viewCount: 89,
-    commentCount: 12,
-    likeCount: 34,
+    title: '攻略征集活动开始',
+    content: '分享你的游戏攻略，赢取丰厚奖励！活动时间：即日起至月底。',
+    author: '活动组',
+    category: '活动',
     createTime: new Date(Date.now() - 3600000).toISOString(),
   },
   {
     id: '3',
-    title: '前端框架选择讨论',
-    content: 'Vue、React、Angular，你更倾向于哪个框架？',
-    author: { nickname: '前端达人', avatar: 'https://picsum.photos/50/50?random=3' },
-    category: 'discussion',
-    viewCount: 234,
-    commentCount: 56,
-    likeCount: 78,
+    title: '社区规则更新',
+    content: '为了更好地维护社区环境，我们对社区规则进行了部分调整。',
+    author: '管理员',
+    category: '公告',
     createTime: new Date(Date.now() - 7200000).toISOString(),
+  },
+  {
+    id: '4',
+    title: '捏脸大赛获奖名单公布',
+    content: '恭喜获奖的玩家们！感谢大家的积极参与和精彩作品。',
+    author: '活动组',
+    category: '活动',
+    createTime: new Date(Date.now() - 10800000).toISOString(),
   },
 ])
 
-// 过滤后的帖子
-const filteredPosts = computed(() => {
-  if (currentFilter.value === 'all') {
-    return mockPosts.value
+// 过滤后的新闻
+const filteredNews = computed(() => {
+  if (currentNewsTab.value === 'all') {
+    return mockNews.value
   }
-  return mockPosts.value.filter(post => post.category === currentFilter.value)
+  return mockNews.value.filter(news => {
+    const categoryMap: Record<string, string> = {
+      news: '新闻',
+      announcement: '公告',
+      activity: '活动'
+    }
+    return news.category === categoryMap[currentNewsTab.value]
+  })
 })
-
-// 筛选标签
-const filterTabs = [
-  { key: 'all', label: '全部' },
-  { key: 'strategy', label: '攻略' },
-  { key: 'news', label: '新闻' },
-  { key: 'discussion', label: '讨论' },
-  { key: 'share', label: '分享' },
-]
 
 // 方法
 function formatTime(time: string) {
@@ -109,189 +101,198 @@ function formatTime(time: string) {
   return date.toLocaleDateString()
 }
 
-function getCategoryName(category: string) {
-  const categoryMap: Record<string, string> = {
-    strategy: '攻略',
-    news: '新闻',
-    discussion: '讨论',
-    share: '分享',
-  }
-  return categoryMap[category] || category
+// 跳转到专区
+function goToSection(path: string) {
+  router.push(path)
 }
 
-function viewPost(postId: string) {
-  router.push(`/bbs/post/${postId}`)
+// 查看新闻详情
+function viewNews(news: any) {
+  console.log('查看新闻:', news)
+  // 这里可以跳转到新闻详情页面
+  // router.push(`/news/detail/${news.id}`)
 }
 
-// const showAiLoginModal = ref(false)
-// const showProfileModal = ref(false)
-
-// const goToLogin = () => {
-//   showAiLoginModal.value = true
-// }
-
-// const goToProfile = () => {
-//   showProfileModal.value = true
-// }
-
-// const handleLoginSuccess = (userData: any) => {
-//   showAiLoginModal.value = false
-//   ElMessage.success('登录成功！')
-//   console.log('登录成功，用户信息:', userData)
-//   // 更新AppHeader组件的用户状态
-//   if (appHeaderRef.value) {
-//     appHeaderRef.value.updateUserState()
-//   }
-
-//   // 登录成功后刷新页面数据或跳转到其他页面
-//   // 这里可以根据需要跳转到用户中心或其他页面
-//   // router.push('/profile') // 如果需要跳转到个人中心
-// }
-
-function handleSizeChange(size: number) {
-  pageSize.value = size
-}
-
-function handleCurrentChange(page: number) {
-  currentPage.value = page
-}
-
-// const userStore = useUserStore()
 // 生命周期
 onMounted(() => {
-  // 初始化模拟数据
-  hotPosts.value = mockPosts.value.slice(0, 3)
-  activeUsers.value = [
-    { id: '1', nickname: '活跃用户1', avatar: 'https://picsum.photos/32/32?random=10', level: '高级' },
-    { id: '2', nickname: '活跃用户2', avatar: 'https://picsum.photos/32/32?random=11', level: '中级' },
-    { id: '3', nickname: '活跃用户3', avatar: 'https://picsum.photos/32/32?random=12', level: '新手' },
-  ]
-  totalPosts.value = mockPosts.value.length
+  // 初始化数据
 })
 </script>
 
 <template>
-  <div class="bbs-container">
+  <div class="home-container">
+    <!-- 背景装饰 -->
+    <div class="background-decoration"></div>
+    
     <!-- 主要内容区域 -->
-    <div class="bbs-main">
-      <div class="main-content">
-        <!-- 左侧内容区 -->
-        <div class="content-left">
-          <!-- 轮播图 -->
-          <div class="banner-section">
-            <el-carousel height="200px" indicator-position="outside">
-              <el-carousel-item v-for="banner in banners" :key="banner.id">
-                <img :src="banner.image" :alt="banner.title" class="banner-image">
-              </el-carousel-item>
-            </el-carousel>
+    <div class="main-content">
+      <!-- 欢迎横幅 -->
+      <div class="welcome-banner">
+        <div class="banner-content">
+          <h1 class="banner-title">欢迎来到书友论坛</h1>
+          <p class="banner-subtitle">分享知识，交流经验，共同成长</p>
+        </div>
+        <div class="banner-image">
+          <img src="https://picsum.photos/400/200?random=1" alt="欢迎横幅" />
+        </div>
+      </div>
+
+      <!-- 专区导航 -->
+      <div class="sections-grid">
+        <!-- 捏脸专区 -->
+        <div class="section-card face-section" @click="goToSection('/face')">
+          <div class="section-icon">
+            <FaIcon name="i-mdi:face-woman" />
           </div>
-
-          <!-- 帖子列表 -->
-          <div class="posts-section">
-            <div class="section-header">
-              <h2>最新帖子</h2>
-              <div class="filter-tabs">
-                <button
-                  v-for="tab in filterTabs"
-                  :key="tab.key"
-                  class="filter-tab" :class="[{ active: currentFilter === tab.key }]"
-                  @click="currentFilter = tab.key"
-                >
-                  {{ tab.label }}
-                </button>
-              </div>
+          <div class="section-content">
+            <h3 class="section-title">捏脸专区</h3>
+            <p class="section-desc">展示你的创意捏脸作品</p>
+            <div class="section-stats">
+              <span class="stat-item">
+                <FaIcon name="i-mdi:eye" />
+                {{ sectionStats.face.views }}
+              </span>
+              <span class="stat-item">
+                <FaIcon name="i-mdi:comment" />
+                {{ sectionStats.face.comments }}
+              </span>
             </div>
-
-            <div class="posts-list">
-              <div
-                v-for="post in filteredPosts"
-                :key="post.id"
-                class="post-item"
-                @click="viewPost(post.id)"
-              >
-                <div class="post-avatar">
-                  <img :src="post.author.avatar" :alt="post.author.nickname">
-                </div>
-                <div class="post-content">
-                  <div class="post-title">
-                    {{ post.title }}
-                  </div>
-                  <div class="post-meta">
-                    <span class="author">{{ post.author.nickname }}</span>
-                    <span class="time">{{ formatTime(post.createTime) }}</span>
-                    <span class="category">{{ getCategoryName(post.category) }}</span>
-                  </div>
-                  <div class="post-preview">
-                    {{ post.content }}
-                  </div>
-                </div>
-                <div class="post-stats">
-                  <div class="stat-item">
-                    <i class="icon-view">👁</i>
-                    <span>{{ post.viewCount }}</span>
-                  </div>
-                  <div class="stat-item">
-                    <i class="icon-comment">💬</i>
-                    <span>{{ post.commentCount }}</span>
-                  </div>
-                  <div class="stat-item">
-                    <i class="icon-like">❤</i>
-                    <span>{{ post.likeCount }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 分页 -->
-            <div class="pagination">
-              <el-pagination
-                v-model:current-page="currentPage"
-                v-model:page-size="pageSize"
-                :total="totalPosts"
-                :page-sizes="[10, 20, 50]"
-                layout="total, sizes, prev, pager, next, jumper"
-                @size-change="handleSizeChange"
-                @current-change="handleCurrentChange"
-              />
-            </div>
+          </div>
+          <div class="section-arrow">
+            <FaIcon name="i-mdi:arrow-right" />
           </div>
         </div>
 
-        <!-- 右侧边栏 -->
-        <div class="sidebar-right">
-          <!-- 热门帖子 -->
-          <div class="sidebar-section">
-            <h3>热门帖子</h3>
-            <div class="hot-posts">
-              <div
-                v-for="post in hotPosts"
-                :key="post.id"
-                class="hot-post-item"
-                @click="viewPost(post.id)"
-              >
-                <div class="hot-post-title">
-                  {{ post.title }}
-                </div>
-                <div class="hot-post-stats">
-                  <span>{{ post.viewCount }} 浏览</span>
-                  <span>{{ post.commentCount }} 回复</span>
-                </div>
-              </div>
+        <!-- 外形专区 -->
+        <div class="section-card appearance-section" @click="goToSection('/skin')">
+          <div class="section-icon">
+            <FaIcon name="i-mdi:account-tie" />
+          </div>
+          <div class="section-content">
+            <h3 class="section-title">外形专区</h3>
+            <p class="section-desc">分享你的角色外形搭配</p>
+            <div class="section-stats">
+              <span class="stat-item">
+                <FaIcon name="i-mdi:eye" />
+                {{ sectionStats.appearance.views }}
+              </span>
+              <span class="stat-item">
+                <FaIcon name="i-mdi:comment" />
+                {{ sectionStats.appearance.comments }}
+              </span>
             </div>
           </div>
+          <div class="section-arrow">
+            <FaIcon name="i-mdi:arrow-right" />
+          </div>
+        </div>
 
-          <!-- 活跃用户 -->
-          <div class="sidebar-section">
-            <h3>活跃用户</h3>
-            <div class="active-users">
-              <div
-                v-for="user in activeUsers"
-                :key="user.id"
-                class="active-user-item"
-              >
-                <img :src="avatar" :alt="user.nickname" class="user-avatar-small">
-                <span class="user-name-small">{{ user.nickname }}</span>
-              </div>
+        <!-- 攻略专区 -->
+        <div class="section-card guide-section" @click="goToSection('/guide')">
+          <div class="section-icon">
+            <FaIcon name="i-mdi:book-open" />
+          </div>
+          <div class="section-content">
+            <h3 class="section-title">攻略专区</h3>
+            <p class="section-desc">分享游戏攻略和心得</p>
+            <div class="section-stats">
+              <span class="stat-item">
+                <FaIcon name="i-mdi:eye" />
+                {{ sectionStats.guide.views }}
+              </span>
+              <span class="stat-item">
+                <FaIcon name="i-mdi:comment" />
+                {{ sectionStats.guide.comments }}
+              </span>
+            </div>
+          </div>
+          <div class="section-arrow">
+            <FaIcon name="i-mdi:arrow-right" />
+          </div>
+        </div>
+
+        <!-- 公告专区 -->
+        <div class="section-card notice-section" @click="goToSection('/notice')">
+          <div class="section-icon">
+            <FaIcon name="i-mdi:bullhorn" />
+          </div>
+          <div class="section-content">
+            <h3 class="section-title">公告专区</h3>
+            <p class="section-desc">查看最新公告和通知</p>
+            <div class="section-stats">
+              <span class="stat-item">
+                <FaIcon name="i-mdi:eye" />
+                {{ sectionStats.notice.views }}
+              </span>
+              <span class="stat-item">
+                <FaIcon name="i-mdi:comment" />
+                {{ sectionStats.notice.comments }}
+              </span>
+            </div>
+          </div>
+          <div class="section-arrow">
+            <FaIcon name="i-mdi:arrow-right" />
+          </div>
+        </div>
+
+        <!-- 活动专区 -->
+        <div class="section-card event-section" @click="goToSection('/event')">
+          <div class="section-icon">
+            <FaIcon name="i-mdi:calendar-star" />
+          </div>
+          <div class="section-content">
+            <h3 class="section-title">活动专区</h3>
+            <p class="section-desc">参与精彩活动和比赛</p>
+            <div class="section-stats">
+              <span class="stat-item">
+                <FaIcon name="i-mdi:eye" />
+                {{ sectionStats.event.views }}
+              </span>
+              <span class="stat-item">
+                <FaIcon name="i-mdi:comment" />
+                {{ sectionStats.event.comments }}
+              </span>
+            </div>
+          </div>
+          <div class="section-arrow">
+            <FaIcon name="i-mdi:arrow-right" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 最新动态 -->
+      <div class="latest-news">
+        <div class="news-header">
+          <h2 class="news-title">最新动态</h2>
+          <div class="news-tabs">
+            <button
+              v-for="tab in newsTabs"
+              :key="tab.key"
+              :class="['news-tab', { active: currentNewsTab === tab.key }]"
+              @click="currentNewsTab = tab.key"
+            >
+              {{ tab.label }}
+            </button>
+          </div>
+        </div>
+        
+        <div class="news-list">
+          <div
+            v-for="news in filteredNews"
+            :key="news.id"
+            class="news-item"
+            @click="viewNews(news)"
+          >
+            <div class="news-category">
+              <span class="category-badge">{{ news.category }}</span>
+            </div>
+            <div class="news-content">
+              <h4 class="news-title-text">{{ news.title }}</h4>
+              <p class="news-preview">{{ news.content }}</p>
+            </div>
+            <div class="news-meta">
+              <span class="news-time">{{ formatTime(news.createTime) }}</span>
+              <span class="news-author">{{ news.author }}</span>
             </div>
           </div>
         </div>
@@ -301,402 +302,490 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.bbs-container {
+.home-container {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  width: 100%;
+  background: linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%);
+  position: relative;
+  overflow: hidden;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box;
 }
 
-.bbs-header {
-  padding: 0;
-  color: #333;
-  background: white;
-  border-bottom: 1px solid rgb(0 0 0 / 10%);
-  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+/* 背景装饰 */
+.background-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.08)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.06)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.04)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+  opacity: 0.3;
+  z-index: 1;
 }
 
-.header-content {
+/* 主要内容区域 */
+.main-content {
+  position: relative;
+  z-index: 2;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* 欢迎横幅 */
+.welcome-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 100%;
-  height: 60px;
-  padding: 0 20px;
-  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 40px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.logo {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-left: 100px;
+.banner-content {
+  flex: 1;
 }
 
-.logo-img {
-  width: 32px;
-  height: 32px;
+.banner-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 16px 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.logo-text {
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.nav-menu {
-  display: flex;
-  gap: 30px;
-}
-
-.nav-item {
-  padding: 8px 16px;
-  color: #333;
-  text-decoration: none;
-  border-radius: 4px;
-  transition: background-color 0.3s;
-}
-
-.nav-item:hover,
-.nav-item.active {
-  color: #000;
-  background-color: rgb(0 0 0 / 10%);
-}
-
-.user-section {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.login-buttons {
-  display: flex;
-  gap: 10px;
-}
-
-.btn {
-  padding: 8px 16px;
-  font-size: 14px;
-  cursor: pointer;
-  border: none;
-  border-radius: 4px;
-  transition: all 0.3s;
-}
-
-.btn-primary {
-  color: white;
-  background-color: #409eff;
-}
-
-.btn-primary:hover {
-  background-color: #337ecc;
-}
-
-.btn-secondary {
-  color: white;
-  background-color: transparent;
-  border: 1px solid white;
-}
-
-.btn-secondary:hover {
-  background-color: rgb(255 255 255 / 10%);
-}
-
-.user-info {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.user-avatar {
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  object-fit: cover;
-  border-radius: 50%;
-  transition: all 0.3s ease;
-}
-
-.user-avatar:hover {
-  box-shadow: 0 0 10px rgb(0 0 0 / 20%);
-  transform: scale(1.1);
-}
-
-.user-name {
-  font-size: 14px;
-  color: #333;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.user-name:hover {
-  color: #000;
-  text-shadow: none;
-}
-
-.btn-logout {
-  padding: 4px 8px;
-  font-size: 12px;
-  color: #666;
-  background-color: transparent;
-  border: 1px solid rgb(0 0 0 / 20%);
-  transition: all 0.3s ease;
-}
-
-.btn-logout:hover {
-  color: #333;
-  background-color: rgb(0 0 0 / 5%);
-  border-color: rgb(0 0 0 / 30%);
-}
-
-.bbs-main {
-  max-width: 1200px;
-  padding: 0 20px;
-  margin: 20px auto;
-}
-
-.main-content {
-  display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 20px;
-}
-
-.content-left {
-  padding: 20px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
-}
-
-.banner-section {
-  margin-bottom: 20px;
+.banner-subtitle {
+  font-size: 1.2rem;
+  color: #5a6c7d;
+  margin: 0;
+  font-weight: 300;
 }
 
 .banner-image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  border-radius: 8px;
+  flex-shrink: 0;
+  margin-left: 40px;
 }
 
-.section-header {
+.banner-image img {
+  width: 200px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* 专区网格 */
+.sections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+/* 专区卡片 */
+.section-card {
+  display: flex;
+  align-items: center;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.section-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.section-card:hover::before {
+  opacity: 1;
+}
+
+.section-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  border-color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* 专区图标 */
+.section-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  margin-right: 20px;
+  font-size: 28px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.face-section .section-icon {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+}
+
+.appearance-section .section-icon {
+  background: linear-gradient(135deg, #4ecdc4, #44a08d);
+}
+
+.guide-section .section-icon {
+  background: linear-gradient(135deg, #45b7d1, #96c93d);
+}
+
+.notice-section .section-icon {
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+}
+
+.event-section .section-icon {
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+}
+
+/* 专区内容 */
+.section-content {
+  flex: 1;
+  position: relative;
+  z-index: 2;
+}
+
+.section-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 8px 0;
+}
+
+.section-desc {
+  font-size: 0.9rem;
+  color: #5a6c7d;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+}
+
+.section-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.section-stats .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #7f8c8d;
+}
+
+/* 专区箭头 */
+.section-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(52, 73, 94, 0.1);
+  color: #34495e;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.section-card:hover .section-arrow {
+  background: rgba(52, 73, 94, 0.2);
+  transform: translateX(4px);
+}
+
+/* 最新动态 */
+.latest-news {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 32px 32px 16px 32px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.news-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 10px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #eee;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.section-header h2 {
+.news-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #2c3e50;
   margin: 0;
-  color: #333;
 }
 
-.filter-tabs {
+.news-tabs {
   display: flex;
-  gap: 10px;
-}
-
-.filter-tab {
-  padding: 6px 12px;
-  cursor: pointer;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  transition: all 0.3s;
-}
-
-.filter-tab.active,
-.filter-tab:hover {
-  color: white;
-  background-color: #409eff;
-  border-color: #409eff;
-}
-
-.posts-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.post-item {
-  display: flex;
-  gap: 15px;
-  padding: 15px;
-  cursor: pointer;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  transition: all 0.3s;
-}
-
-.post-item:hover {
-  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
-  transform: translateY(-2px);
-}
-
-.post-avatar img {
-  width: 48px;
-  height: 48px;
-  object-fit: cover;
-  border-radius: 50%;
-}
-
-.post-content {
-  flex: 1;
-}
-
-.post-title {
-  margin-bottom: 8px;
-  font-size: 16px;
-  font-weight: bold;
-  line-height: 1.4;
-  color: #333;
-}
-
-.post-meta {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 8px;
-  font-size: 12px;
-  color: #666;
-}
-
-.post-preview {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-line-clamp: 2;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #666;
-  -webkit-box-orient: vertical;
-}
-
-.post-stats {
-  display: flex;
-  flex-direction: column;
   gap: 8px;
-  align-items: center;
-  min-width: 60px;
 }
 
-.stat-item {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  font-size: 12px;
-  color: #666;
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.sidebar-right {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.sidebar-section {
-  padding: 20px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
-}
-
-.sidebar-section h3 {
-  margin: 0 0 15px;
-  font-size: 16px;
-  color: #333;
-}
-
-.hot-posts {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.hot-post-item {
-  padding: 10px;
+.news-tab {
+  padding: 8px 16px;
+  background: rgba(52, 73, 94, 0.1);
+  border: 1px solid rgba(52, 73, 94, 0.2);
+  border-radius: 20px;
+  color: #5a6c7d;
+  font-size: 0.9rem;
   cursor: pointer;
-  border: 1px solid #eee;
-  border-radius: 4px;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
 }
 
-.hot-post-item:hover {
-  background-color: #f5f5f5;
+.news-tab:hover {
+  background: rgba(52, 73, 94, 0.2);
+  color: #2c3e50;
 }
 
-.hot-post-title {
-  margin-bottom: 5px;
-  font-size: 14px;
-  line-height: 1.4;
-  color: #333;
+.news-tab.active {
+  background: rgba(52, 73, 94, 0.3);
+  color: #2c3e50;
+  border-color: rgba(52, 73, 94, 0.4);
 }
 
-.hot-post-stats {
-  display: flex;
-  gap: 10px;
-  font-size: 12px;
-  color: #666;
-}
-
-.active-users {
+/* 新闻列表 */
+.news-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
 }
 
-.active-user-item {
+.news-item {
   display: flex;
-  gap: 10px;
   align-items: center;
-  padding: 8px;
-  border-radius: 4px;
-  transition: background-color 0.3s;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.active-user-item:hover {
-  background-color: #f5f5f5;
+.news-item:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: translateX(4px);
 }
 
-.user-avatar-small {
-  width: 32px;
-  height: 32px;
-  object-fit: cover;
-  border-radius: 50%;
+.news-category {
+  flex-shrink: 0;
+  margin-right: 16px;
 }
 
-.user-name-small {
+.category-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.news-content {
   flex: 1;
-  font-size: 14px;
-  color: #333;
+  margin-right: 16px;
 }
 
-.user-level {
-  padding: 2px 6px;
-  font-size: 12px;
-  color: #409eff;
-  background-color: #ecf5ff;
-  border-radius: 10px;
+.news-title-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 8px 0;
+  line-height: 1.4;
 }
 
-@media (width <= 768px) {
+.news-preview {
+  font-size: 0.9rem;
+  color: #5a6c7d;
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.news-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.news-time {
+  font-size: 0.8rem;
+  color: #95a5a6;
+}
+
+.news-author {
+  font-size: 0.8rem;
+  color: #7f8c8d;
+  font-weight: 500;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
   .main-content {
+    padding: 20px 16px 16px 16px;
+    gap: 24px;
+  }
+
+  .welcome-banner {
+    flex-direction: column;
+    text-align: center;
+    padding: 24px;
+  }
+
+  .banner-title {
+    font-size: 2rem;
+  }
+
+  .banner-subtitle {
+    font-size: 1rem;
+  }
+
+  .banner-image {
+    margin-left: 0;
+    margin-top: 20px;
+  }
+
+  .banner-image img {
+    width: 160px;
+    height: 100px;
+  }
+
+  .sections-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
-  .nav-menu {
-    display: none;
+  .section-card {
+    padding: 20px;
   }
 
-  .header-content {
-    padding: 0 10px;
+  .section-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    margin-right: 16px;
   }
 
-  .bbs-main {
-    padding: 0 10px;
+  .section-title {
+    font-size: 1.2rem;
+  }
+
+  .section-desc {
+    font-size: 0.85rem;
+  }
+
+  .latest-news {
+    padding: 24px 24px 12px 24px;
+  }
+
+  .news-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .news-title {
+    font-size: 1.5rem;
+  }
+
+  .news-tabs {
+    flex-wrap: wrap;
+  }
+
+  .news-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .news-category {
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+
+  .news-content {
+    margin-right: 0;
+    width: 100%;
+  }
+
+  .news-meta {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 16px 12px 12px 12px;
+  }
+
+  .welcome-banner {
+    padding: 20px;
+  }
+
+  .banner-title {
+    font-size: 1.8rem;
+  }
+
+  .section-card {
+    padding: 16px;
+  }
+
+  .section-icon {
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+    margin-right: 12px;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+  }
+
+  .latest-news {
+    padding: 20px 20px 10px 20px;
+  }
+
+  .news-item {
+    padding: 12px;
   }
 }
 </style>
