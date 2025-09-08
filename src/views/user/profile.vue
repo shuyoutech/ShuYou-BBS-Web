@@ -1,3 +1,71 @@
+<script setup lang="ts">
+import { useUserStore } from '@/store/modules/user.ts'
+import { ElMessage } from 'element-plus'
+
+interface Props {
+  visible: boolean
+}
+
+interface Emits {
+  (e: 'update:visible', value: boolean): void
+  (e: 'open-personal-center'): void
+}
+
+defineProps<Props>()
+const emit = defineEmits<Emits>()
+
+const userStore = useUserStore()
+
+// 默认头像
+const defaultAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=DM'
+
+// 获取用户头像
+const getUserAvatar = () => {
+  const avatar = userStore.avatar || userStore.userInfo?.avatar
+  return avatar || defaultAvatar
+}
+
+// 获取用户昵称
+const getUserNickname = () => {
+  const nickname = userStore.userInfo?.nickname || userStore.userInfo?.mobile
+  return nickname || ''
+}
+
+// 处理手机绑定
+const handlePhoneBinding = () => {
+  ElMessage.info('手机绑定功能开发中...')
+}
+
+// 处理微信绑定
+const handleWechatBinding = () => {
+  ElMessage.info('微信绑定功能开发中...')
+}
+
+// 检查是否绑定手机
+const isMobileBound = () => {
+  return userStore.userInfo?.mobile && userStore.userInfo.mobile.trim() !== ''
+}
+
+// 检查是否绑定微信
+const isWechatBound = () => {
+  return userStore.userInfo?.bindWechat === true
+}
+
+// 处理个人中心
+const handlePersonalCenter = () => {
+  emit('open-personal-center')
+  emit('update:visible', false)
+}
+
+// 处理退出登录
+const handleLogout = () => {
+  userStore.logout()
+  ElMessage.success('已退出登录')
+  emit('update:visible', false)
+}
+
+</script>
+
 <template>
   <div v-if="visible" class="profile-popup" @click.stop>
     <!-- 关闭按钮 -->
@@ -29,15 +97,21 @@
           <FaIcon name="i-mdi:phone" class="binding-icon"/>
           <span>绑定手机</span>
         </div>
-        <FaIcon name="i-mdi:chevron-right" class="arrow-icon"/>
+        <div class="binding-right">
+          <span v-if="isMobileBound()" class="bound-text">已绑定</span>
+          <FaIcon v-else name="i-mdi:chevron-right" class="arrow-icon"/>
+        </div>
       </div>
 
-      <div class="binding-item">
+      <div class="binding-item" @click="handleWechatBinding">
         <div class="binding-left">
           <FaIcon name="i-mdi:wechat" class="binding-icon wechat-icon"/>
           <span>绑定微信</span>
         </div>
-        <span class="bound-text">已绑定</span>
+        <div class="binding-right">
+          <span v-if="isWechatBound()" class="bound-text">已绑定</span>
+          <FaIcon v-else name="i-mdi:chevron-right" class="arrow-icon"/>
+        </div>
       </div>
     </div>
 
@@ -49,59 +123,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { useUserStore } from '@/store/modules/user.ts'
-import { ElMessage } from 'element-plus'
-
-interface Props {
-  visible: boolean
-}
-
-interface Emits {
-  (e: 'update:visible', value: boolean): void
-  (e: 'open-personal-center'): void
-}
-
-defineProps<Props>()
-const emit = defineEmits<Emits>()
-
-const userStore = useUserStore()
-
-// 默认头像
-const defaultAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=DM'
-
-// 获取用户头像
-const getUserAvatar = () => {
-  const avatar = userStore.avatar || userStore.userInfo?.avatar
-  return avatar || defaultAvatar
-}
-
-// 获取用户昵称
-const getUserNickname = () => {
-  const nickname = userStore.userInfo?.nickname || userStore.userInfo?.name
-  return nickname || 'DM'
-}
-
-// 处理手机绑定
-const handlePhoneBinding = () => {
-  ElMessage.info('手机绑定功能开发中...')
-}
-
-// 处理个人中心
-const handlePersonalCenter = () => {
-  emit('open-personal-center')
-  emit('update:visible', false)
-}
-
-// 处理退出登录
-const handleLogout = () => {
-  userStore.logout()
-  ElMessage.success('已退出登录')
-  emit('update:visible', false)
-}
-
-</script>
 
 <style scoped>
 /* 弹窗主体 */
@@ -267,6 +288,11 @@ const handleLogout = () => {
 
 .wechat-icon {
   color: #07c160;
+}
+
+.binding-right {
+  display: flex;
+  align-items: center;
 }
 
 .arrow-icon {

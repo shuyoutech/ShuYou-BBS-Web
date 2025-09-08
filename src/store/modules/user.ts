@@ -1,5 +1,6 @@
 import {authAccessToken, authLogout, authSmsLogin} from "@/api/auth";
 import {memberGetProfileApi} from "@/api/member";
+import type {MemberUserVo} from "@/api/member/types.ts";
 
 export const useUserStore = defineStore(
   // 唯一ID
@@ -9,7 +10,7 @@ export const useUserStore = defineStore(
     const token = ref(localStorage.getItem('token') ?? '')
     const avatar = ref(localStorage.getItem('avatar') ?? '')
     const nickname = ref(localStorage.getItem('nickname') ?? '')
-    const userInfo = ref(localStorage.getItem('userInfo') ? JSON.parse(<string>localStorage.getItem('userInfo')) : {})
+    const userInfo = ref<MemberUserVo>(localStorage.getItem('userInfo') ? JSON.parse(<string>localStorage.getItem('userInfo')) : {})
     const permissions = ref<string[]>([])
     const showAiLoginModal = ref<boolean>(false)
     const isLogin = computed(() => {
