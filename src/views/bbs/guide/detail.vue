@@ -1,24 +1,23 @@
 <script setup lang="ts">
 import {ref, onMounted} from 'vue'
-import {useRouter, useRoute} from 'vue-router'
+import {useRoute} from 'vue-router'
 import {postCommentApi, postDetailApi, postReplyApi} from '@/api/bbs/post'
 import type {PostVo} from '@/api/bbs/post/types'
 import {toast} from 'vue-sonner'
 import {commentPageApi} from "@/api/bbs/comment";
 import type {PostCommentQuery, PostCommentVo} from "@/api/bbs/comment/types.ts";
 
-const router = useRouter()
 const route = useRoute()
 
 // 评论相关数据
 const newComment = ref('')
-const hasMoreComments = ref(true)
-const commentLoading = ref(false)
+// const hasMoreComments = ref(true)
+// const commentLoading = ref(false)
 
-// 返回上一页
-const goBack = () => {
-  router.back()
-}
+// 返回上一页 - 已移除，使用浏览器返回按钮
+// const goBack = () => {
+//   router.back()
+// }
 
 // 发表评论
 const submitComment = async () => {
@@ -26,29 +25,29 @@ const submitComment = async () => {
   await postCommentApi(skinId, newComment.value);
 }
 
-// 点赞评论
-const likeComment = async (comment: any) => {
-  try {
-    comment.liked = !comment.liked
-    if (comment.liked) {
-      comment.likeCount++
-    } else {
-      comment.likeCount--
-    }
-    // 这里应该调用点赞评论API
-    toast.success(comment.liked ? '点赞成功' : '取消点赞')
-  } catch (error) {
-    // 回滚状态
-    comment.liked = !comment.liked
-    if (comment.liked) {
-      comment.likeCount++
-    } else {
-      comment.likeCount--
-    }
-    console.error('点赞评论失败:', error)
-    toast.error('操作失败')
-  }
-}
+// 点赞评论 - 暂时移除，保持界面简洁
+// const likeComment = async (comment: any) => {
+//   try {
+//     comment.liked = !comment.liked
+//     if (comment.liked) {
+//       comment.likeCount++
+//     } else {
+//       comment.likeCount--
+//     }
+//     // 这里应该调用点赞评论API
+//     toast.success(comment.liked ? '点赞成功' : '取消点赞')
+//   } catch (error) {
+//     // 回滚状态
+//     comment.liked = !comment.liked
+//     if (comment.liked) {
+//       comment.likeCount++
+//     } else {
+//       comment.likeCount--
+//     }
+//     console.error('点赞评论失败:', error)
+//     toast.error('操作失败')
+//   }
+// }
 
 // 回复评论
 const replyComment = ref<Tree<PostCommentVo>>()
@@ -56,24 +55,35 @@ const replyContent = ref('')
 const showReplies = ref<Set<string>>(new Set())
 
 const replyToComment = (comment: Tree<PostCommentVo>) => {
+  console.log('点击回复按钮', comment)
   // 切换回复列表显示状态
   const commentId = comment.value
   if (showReplies.value.has(commentId)) {
     showReplies.value.delete(commentId)
     replyComment.value = undefined
+    console.log('隐藏回复区域')
   } else {
     showReplies.value.add(commentId)
-    // 不设置回复框，只显示回复列表
-    replyComment.value = undefined
+    // 显示回复输入框
+    replyComment.value = comment
     replyContent.value = ''
+    console.log('显示回复区域', commentId, replyComment.value)
   }
 }
 
-// 显示回复框
-const showReplyForm = (comment: Tree<PostCommentVo>) => {
-  replyComment.value = comment
+// 收起回复
+const collapseReply = (comment: Tree<PostCommentVo>) => {
+  const commentId = comment.value
+  showReplies.value.delete(commentId)
+  replyComment.value = undefined
   replyContent.value = ''
 }
+
+// 显示回复框 - 已移除，使用replyToComment函数
+// const showReplyForm = (comment: Tree<PostCommentVo>) => {
+//   replyComment.value = comment
+//   replyContent.value = ''
+// }
 
   // 提交回复
   const submitReply = async () => {
@@ -92,21 +102,21 @@ const showReplyForm = (comment: Tree<PostCommentVo>) => {
     }
   }
 
-// 加载更多评论
-const loadMoreComments = async () => {
-  try {
-    commentLoading.value = true
-    // 这里应该调用加载更多评论API
-    // 暂时模拟没有更多评论
-    hasMoreComments.value = false
-    toast.info('没有更多评论了')
-  } catch (error) {
-    console.error('加载更多评论失败:', error)
-    toast.error('加载失败')
-  } finally {
-    commentLoading.value = false
-  }
-}
+// 加载更多评论 - 暂时移除，保持界面简洁
+// const loadMoreComments = async () => {
+//   try {
+//     commentLoading.value = true
+//     // 这里应该调用加载更多评论API
+//     // 暂时模拟没有更多评论
+//     hasMoreComments.value = false
+//     toast.info('没有更多评论了')
+//   } catch (error) {
+//     console.error('加载更多评论失败:', error)
+//     toast.error('加载失败')
+//   } finally {
+//     commentLoading.value = false
+//   }
+// }
 
 // 获取外形ID
 const skinId = route.params.id as string
@@ -142,1136 +152,503 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="skin-detail-container">
-    <!-- 详情内容 -->
-    <div class="detail-content">
-      <!-- 主要内容 -->
-      <div class="main-detail">
-        <!-- 标题和作者信息 -->
-        <div class="header-section">
-          <div class="title-header">
-            <h1 class="detail-title">{{ skin.title }}</h1>
-            <!-- 返回按钮 -->
-            <div class="back-button" @click="goBack">
-              <FaIcon name="i-mdi:arrow-left" class="back-icon"/>
-              <span>返回</span>
-            </div>
-          </div>
-          <div v-if="skin.tagNames && skin.tagNames.length > 0" class="tags-section">
-            <div class="section-container">
-              <h3 class="section-title">标签</h3>
-              <div class="tags-container">
-              <span
-                v-for="tagName in skin.tagNames"
-                :key="tagName"
-                class="detail-tag"
-              >
-                {{ tagName }}
-              </span>
-              </div>
-            </div>
-          </div>
+  <div class="guide-detail-container">
+    <!-- 主要内容区域 -->
+    <div class="main-content">
+      <!-- 顶部信息栏 -->
+      <div class="top-info-bar">
+        <span class="reply-info">
+          <span class="reply-number">{{ skin.commentCount || 0 }}</span>回复贴，共<span class="page-number">1</span>页
+        </span>
+      </div>
 
-          <!-- 封面图片区域 -->
-          <div class="section-container">
-            <h3 class="section-title">封面</h3>
-            <div class="cover-container">
-              <img
-                :src="skin.coverImgUrl"
-                :alt="skin.title"
-                class="cover-image"
-              />
+      <!-- 帖子标题和操作按钮区域 -->
+      <div class="post-header">
+        <h1 class="post-title">{{ skin.title }}</h1>
+        <div class="post-actions">
+          <button class="action-btn only-op-btn">只看楼主</button>
+          <button class="action-btn collect-btn">收藏</button>
+          <button class="action-btn reply-btn">
+            <FaIcon name="i-mdi:comment-outline" class="action-icon"/>
+            回复
+          </button>
+        </div>
+      </div>
+
+      <!-- 楼主帖子 -->
+      <div class="post-container">
+        <!-- 用户信息区域 -->
+        <div class="user-info">
+          <div class="avatar-container">
+            <img :src="skin.userAvatar" :alt="skin.userName" class="user-avatar"/>
+            <div class="op-badge">楼主</div>
+          </div>
+          <div class="user-details">
+            <div class="username">{{ skin.userName }}</div>
+            <div class="user-badge">
+              <span class="badge-icon">🏆</span>
+              <span class="badge-text">知名人士</span>
+              <span class="badge-level">11</span>
             </div>
           </div>
-          <!-- 作品描述区域 -->
-          <div v-if="skin.content" class="section-container">
-            <h3 class="section-title">作品描述</h3>
-            <div class="content-body" v-html="skin.content"></div>
+        </div>
+
+        <!-- 帖子内容区域 -->
+        <div class="post-content">
+          <div class="post-body" v-html="skin.content"></div>
+          <div class="post-meta">
+            <span class="ip-location">IP属地:广东</span>
+            <button class="report-btn">举报</button>
+            <span class="client-info">来自Android客户端</span>
+            <span class="floor-number">1楼</span>
+            <span class="post-time">{{ skin.createTimeFormat }}</span>
+            <button class="reply-btn">回复</button>
           </div>
         </div>
       </div>
 
-      <!-- 评论区域 -->
+      <!-- 评论列表 -->
       <div class="comments-section">
-        <div class="comments-container">
-          <!-- 发表评论 -->
-          <div class="comment-form">
-            <textarea
-              v-model="newComment"
-              placeholder="留下你的看法"
-              class="comment-textarea"
-              rows="4"
-            ></textarea>
-            <div class="form-actions">
-              <button
-                class="submit-comment-btn"
-                :disabled="!newComment.trim()"
-                @click="submitComment"
-              >
-                评论
+        <div
+          v-for="(comment, index) in comments"
+          :key="comment.value"
+          class="comment-container"
+        >
+          <!-- 用户信息区域 -->
+          <div class="user-info">
+            <div class="avatar-container">
+              <img :src="comment.metadata.userAvatar" :alt="comment.metadata.userName" class="user-avatar"/>
+            </div>
+            <div class="user-details">
+              <div class="username">{{ comment.metadata.userName }}</div>
+              <div class="user-badge">
+                <span class="badge-icon">⭐</span>
+                <span class="badge-text">铁杆吧友</span>
+                <span class="badge-level">8</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 评论内容区域 -->
+          <div class="comment-content">
+            <div class="comment-text">{{ comment.metadata.content }}</div>
+            <div class="comment-meta">
+              <span class="ip-location">IP属地:河北</span>
+              <button class="report-btn">举报</button>
+              <span class="client-info">来自iPhone客户端</span>
+              <span class="floor-number">{{ comments.length - index + 1 }}楼</span>
+              <span class="comment-time">{{ comment.metadata.createTimeFormat }}</span>
+              <button class="reply-btn" @click="replyToComment(comment)">
+                回复
+                <span v-if="comment.children && comment.children.length > 0" class="reply-count">
+                  ({{ comment.children.length }})
+                </span>
               </button>
             </div>
           </div>
 
-          <!-- 评论标题 -->
-          <div class="comments-header">
-            <h3 class="comments-title">评论 {{ skin.commentCount }}</h3>
-          </div>
-
-          <!-- 评论列表 -->
-          <div class="comments-list">
+          <!-- 子回复列表 -->
+          <div v-if="comment.children && comment.children.length > 0 && showReplies.has(comment.value)" class="replies-container">
             <div
-              v-for="(comment, index) in comments"
-              :key="comment.value"
+              v-for="reply in comment.children"
+              :key="reply.value"
+              class="reply-container"
             >
-              <div class="comment-item">
-                <div class="floor-number">{{ comments.length - index }}楼</div>
-                <div class="comment-avatar">
-                  <img
-                    :src="comment.metadata.userAvatar"
-                    :alt="comment.metadata.userName"
-                    class="avatar-img"
-                  />
+              <!-- 回复用户信息 -->
+              <div class="user-info">
+                <div class="avatar-container">
+                  <img :src="reply.metadata.userAvatar" :alt="reply.metadata.userName" class="user-avatar"/>
                 </div>
-                <div class="comment-content">
-                  <div class="comment-header">
-                    <span class="comment-author">{{ comment.metadata.userName }}</span>
-                  </div>
-                  <div class="comment-text">{{ comment.metadata.content }}</div>
-                  <div class="comment-meta">
-                    <div class="meta-left">
-                      <span class="comment-time">{{ comment.metadata.createTimeFormat }}</span>
-                      <span class="comment-location" v-if="comment.metadata.ipLocation">{{
-                          comment.metadata.ipLocation
-                        }}</span>
-                    </div>
-                    <div class="meta-right">
-                      <div class="action-buttons">
-                        <button class="action-link report-btn">举报</button>
-                        <button class="action-link reply-btn" @click="replyToComment(comment)">
-                          回复
-                          <span v-if="comment.children && comment.children.length > 0" class="reply-count">
-                            ({{ comment.children.length }})
-                          </span>
-                        </button>
-                        <button
-                          class="action-link like-btn"
-                          :class="{ liked: comment.metadata.liked }"
-                          @click="likeComment(comment)"
-                        >
-                          <FaIcon name="i-mdi:thumb-up" class="action-icon"/>
-                          <span>{{ comment.metadata.likeCount || 0 }}</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                <div class="user-details">
+                  <div class="username">{{ reply.metadata.userName }}</div>
                 </div>
               </div>
 
-
-              <!-- 子回复列表 -->
-              <div v-if="comment.children && comment.children.length > 0 && showReplies.has(comment.value)" class="reply-list-container">
-                <div class="reply-list-header">
-                  <span class="reply-list-title">回复列表</span>
-                  <button class="collapse-replies-btn" @click="replyToComment(comment)">收起回复</button>
-                </div>
-                <div class="reply-list">
-                  <div
-                    v-for="(reply, replyIndex) in comment.children"
-                    :key="reply.value"
-                    class="reply-item"
-                  >
-                    <div class="reply-avatar">
-                      <img
-                        :src="reply.metadata.userAvatar"
-                        :alt="reply.metadata.userName"
-                        class="avatar-img"
-                      />
-                    </div>
-                    <div class="reply-content">
-                      <div class="reply-header">
-                        <span class="reply-author">{{ reply.metadata.userName }}</span>
-                        <span class="reply-to" v-if="reply.metadata.replyToUserName">
-                          回复 {{ reply.metadata.replyToUserName }}:
-                        </span>
-                      </div>
-                      <div class="reply-text">{{ reply.metadata.content }}</div>
-                      <div class="reply-meta">
-                        <div class="meta-left">
-                          <span class="reply-time">{{ reply.metadata.createTimeFormat }}</span>
-                          <span class="reply-location" v-if="reply.metadata.ipLocation">{{
-                              reply.metadata.ipLocation
-                            }}</span>
-                        </div>
-                        <div class="meta-right">
-                          <div class="action-buttons">
-                            <button class="action-link report-btn">举报</button>
-                            <button class="action-link reply-btn" @click="replyToComment(reply)">回复</button>
-                            <button
-                              class="action-link like-btn"
-                              :class="{ liked: reply.metadata.liked }"
-                              @click="likeComment(reply)"
-                            >
-                              <FaIcon name="i-mdi:thumb-up" class="action-icon"/>
-                              <span>{{ reply.metadata.likeCount || 0 }}</span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 我也说一句按钮 -->
-                <div class="reply-action-section">
-                  <button class="i-want-to-reply-btn" @click="showReplyForm(comment)">
-                    我也说一句
-                  </button>
-                </div>
-
-                <!-- 回复输入框 - 在我也说一句按钮下面 -->
-                <div v-if="replyComment && replyComment.value === comment.value" class="reply-form">
-                  <div class="reply-input-container">
-                     <textarea
-                       v-model="replyContent"
-                       placeholder=""
-                       class="reply-textarea"
-                       rows="4"
-                     ></textarea>
-                    <button
-                      class="submit-reply-btn"
-                      :disabled="!replyContent.trim()"
-                      @click="submitReply"
-                    >
-                      回复
-                    </button>
-                  </div>
+              <!-- 回复内容 -->
+              <div class="reply-content">
+                <div class="reply-text">{{ reply.metadata.content }}</div>
+                <div class="reply-meta">
+                  <span class="reply-time">{{ reply.metadata.createTimeFormat }}</span>
+                  <button class="reply-btn">回复</button>
                 </div>
               </div>
             </div>
           </div>
 
+          <!-- 回复区域 -->
+          <div v-if="replyComment && replyComment.value === comment.value" class="reply-section">
+            <!-- 回复操作区域 -->
+            <div class="reply-action-section">
+              <button class="collapse-reply-btn" @click="collapseReply(comment)">
+                收起回复
+              </button>
+            </div>
 
-          <!-- 加载更多评论 -->
-          <div class="load-more-section" v-if="hasMoreComments">
-            <button class="load-more-btn" @click="loadMoreComments">
-              加载更多评论
-            </button>
+            <!-- 回复输入框 -->
+            <div class="reply-form">
+              <textarea
+                v-model="replyContent"
+                placeholder=""
+                class="reply-textarea"
+                rows="4"
+              ></textarea>
+              <div class="reply-form-actions">
+                <button class="image-upload-btn">
+                  <FaIcon name="i-mdi:image-outline" class="upload-icon"/>
+                </button>
+                <button
+                  class="submit-reply-btn"
+                  :disabled="!replyContent.trim()"
+                  @click="submitReply"
+                >
+                  发表
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
+      <!-- 发表评论区域 -->
+      <div class="comment-form-section">
+        <div class="comment-form">
+          <textarea
+            v-model="newComment"
+            placeholder=""
+            class="comment-textarea"
+            rows="4"
+          ></textarea>
+          <button
+            class="submit-comment-btn"
+            :disabled="!newComment.trim()"
+            @click="submitComment"
+          >
+            发表回复
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.skin-detail-container {
+.guide-detail-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  padding: 20px;
+  background: #f5f5f5;
+  padding: 20px 0;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-/* 加载状态 */
-.loading-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-}
-
-.loading-spinner {
-  text-align: center;
-}
-
-.loading-icon {
-  font-size: 48px;
-  color: #409eff;
-  animation: spin 1s linear infinite;
-}
-
-.loading-text {
-  margin-top: 16px;
-  font-size: 16px;
-  color: #666;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* 返回按钮 */
-.back-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 25px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-  width: fit-content;
-  font-size: 14px;
-  font-weight: 600;
-  position: relative;
-  overflow: hidden;
-}
-
-.back-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
-}
-
-.back-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-
-.back-button:hover::before {
-  left: 100%;
-}
-
-.back-icon {
-  font-size: 18px;
-  color: white;
-}
-
-/* 主要内容 */
-.main-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+/* 顶部信息栏 */
+.top-info-bar {
   background: white;
-  border-radius: 20px;
-  padding: 30px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid #e4e7ed;
+  padding: 8px 20px;
 }
 
-/* 头部区域 */
-.header-section {
-  padding-bottom: 20px;
+.reply-info {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
 }
 
-.title-header {
+.reply-number,
+.page-number {
+  color: #ff4444;
+  font-weight: 600;
+}
+
+/* 帖子标题和操作按钮区域 */
+.post-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-}
-
-/* 区域容器 */
-.section-container {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 16px;
-  padding: 24px;
-  border: 1px solid rgba(64, 158, 255, 0.1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  position: relative;
-  overflow: hidden;
-}
-
-.section-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #409eff 0%, #67c23a 50%, #e6a23c 100%);
-}
-
-
-/* 区域标题 */
-.section-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0 0 16px 0;
-  padding: 0;
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.section-title::before {
-  content: '';
-  width: 4px;
-  height: 20px;
-  background: linear-gradient(135deg, #409eff 0%, #337ecc 100%);
-  border-radius: 2px;
-}
-
-/* 标签区域 */
-.tags-section {
-  margin: 20px 0;
-}
-
-.tags-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.detail-tag {
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #409eff 0%, #337ecc 100%);
-  color: white;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  border: none;
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.detail-tag::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
-}
-
-.detail-tag:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4);
-}
-
-.detail-tag:hover::before {
-  left: 100%;
-}
-
-/* 封面区域 */
-
-.cover-container {
-  max-width: 600px;
-  width: 100%;
-  border-radius: 20px;
-  overflow: hidden;
+  padding: 16px 20px;
   background: white;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  margin: 0 auto;
-  position: relative;
-  transition: all 0.3s ease;
-}
-
-.cover-container:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
-
-.cover-image {
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-  display: block;
-  transition: transform 0.3s ease;
-}
-
-.cover-container:hover .cover-image {
-  transform: scale(1.02);
-}
-
-.detail-title {
-  font-size: 32px;
-  font-weight: 800;
-  background: linear-gradient(135deg, #2c3e50 0%, #409eff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin: 0 0 20px 0;
-  line-height: 1.3;
-  position: relative;
-}
-
-.author-section {
-  margin-top: 20px;
-}
-
-.author-info {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.author-avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid #f0f9ff;
-}
-
-.author-details {
-  flex: 1;
-}
-
-.author-name {
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 8px 0;
-}
-
-.author-meta {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.publish-time {
-  font-size: 14px;
-  color: #666;
-}
-
-.location-info {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  background: #f0f9ff;
-  border-radius: 12px;
-  border: 1px solid #b3d8ff;
-}
-
-.location-icon {
-  font-size: 12px;
-  color: #409eff;
-}
-
-.location-text {
-  font-size: 12px;
-  color: #409eff;
-  font-weight: 500;
-}
-
-/* 标签区域 */
-.tags-section {
-}
-
-.section-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 12px 0;
-}
-
-.tags-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.detail-tag {
-  padding: 6px 12px;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  color: #409eff;
-  border-radius: 16px;
-  font-size: 13px;
-  font-weight: 500;
-  border: 1px solid #b3d8ff;
-}
-
-/* 统计信息 */
-.stats-section {
-  border-bottom: 1px solid #e4e7ed;
-  padding-bottom: 20px;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 12px;
-  border: 1px solid #e4e7ed;
-}
-
-.stat-icon {
-  font-size: 24px;
-  color: #409eff;
-}
-
-.stat-content {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.stat-number {
-  font-size: 18px;
-  font-weight: 700;
-  color: #333;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: #666;
-}
-
-/* 操作按钮 */
-.actions-section {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.action-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 24px;
-  border: none;
-  border-radius: 25px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 14px;
-  font-weight: 600;
-  min-width: 120px;
-  justify-content: center;
-}
-
-.like-button {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
-}
-
-.like-button.liked {
-  background: linear-gradient(135deg, #ff4757 0%, #c44569 100%);
-  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.4);
-}
-
-.like-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
-}
-
-.download-button {
-  background: linear-gradient(135deg, #409eff 0%, #337ecc 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
-}
-
-.download-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(64, 158, 255, 0.4);
-}
-
-.share-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.share-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-
-.action-icon {
-  font-size: 16px;
-}
-
-/* 错误状态 */
-.error-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-}
-
-.error-content {
-  text-align: center;
-  background: white;
-  padding: 40px;
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.error-icon {
-  font-size: 64px;
-  color: #f56c6c;
-  margin-bottom: 20px;
-}
-
-.error-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 12px 0;
-}
-
-.error-message {
-  font-size: 16px;
-  color: #666;
-  margin: 0 0 24px 0;
-}
-
-.retry-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  background: linear-gradient(135deg, #409eff 0%, #337ecc 100%);
-  color: white;
-  border: none;
-  border-radius: 25px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.retry-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(64, 158, 255, 0.4);
-}
-
-/* 内容区域样式 */
-
-.content-body {
-  font-size: 16px;
-  line-height: 1.8;
-  color: #555;
-}
-
-.content-body :deep(img) {
-  max-width: 100%;
-  height: auto;
-  border-radius: 8px;
-  margin: 10px 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.content-body :deep(p) {
-  margin: 12px 0;
-}
-
-.content-body :deep(h1, h2, h3, h4, h5, h6) {
-  color: #333;
-  margin: 20px 0 12px 0;
-  font-weight: 600;
-}
-
-.content-body :deep(blockquote) {
-  border-left: 4px solid #409eff;
-  padding-left: 16px;
-  margin: 16px 0;
-  color: #666;
-  font-style: italic;
-}
-
-/* 评论区域样式 */
-.comments-section {
-  margin-top: 20px;
-}
-
-.comments-container {
-  background: white;
-  border-radius: 16px;
-  padding: 30px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.comments-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 20px;
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 24px 0;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #f0f9ff;
-}
-
-.title-icon {
-  font-size: 20px;
-  color: #409eff;
-}
-
-/* 评论表单样式 */
-.comment-form {
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.comment-textarea {
-  width: 100%;
-  padding: 16px;
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
-  font-size: 14px;
-  line-height: 1.6;
-  resize: vertical;
-  min-height: 100px;
-  font-family: inherit;
-  transition: all 0.3s ease;
-  background: white;
-}
-
-.comment-textarea:focus {
-  outline: none;
-  border-color: #409eff;
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
-}
-
-.comment-textarea::placeholder {
-  color: #a0a8b0;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.submit-comment-btn {
-  padding: 8px 20px;
-  background: #8b5cf6;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.submit-comment-btn:hover:not(:disabled) {
-  background: #7c3aed;
-}
-
-.submit-comment-btn:disabled {
-  background: #c0c4cc;
-  cursor: not-allowed;
-}
-
-/* 评论标题 */
-.comments-header {
-  margin-bottom: 20px;
-  padding-bottom: 12px;
   border-bottom: 1px solid #e4e7ed;
 }
 
-.comments-title {
+.post-title {
   font-size: 18px;
   font-weight: 600;
   color: #333;
   margin: 0;
+  line-height: 1.4;
+  flex: 1;
 }
 
-/* 评论列表样式 */
-.comments-list {
+.post-actions {
   display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.comment-item {
-  display: flex;
-  gap: 12px;
-  padding: 16px 0;
-  border-bottom: 1px solid #f0f0f0;
-  position: relative;
-}
-
-.comment-item:last-child {
-  border-bottom: none;
-}
-
-.comment-avatar {
+  gap: 8px;
   flex-shrink: 0;
 }
 
-.avatar-img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: white;
+  border: 1px solid #d9d9d9;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #333;
+  transition: all 0.2s ease;
+  min-width: 50px;
+  justify-content: center;
+}
+
+.action-btn:hover {
+  background: #f5f5f5;
+  border-color: #409eff;
+}
+
+.action-icon {
+  font-size: 14px;
+}
+
+/* 主要内容区域 */
+.main-content {
+  background: white;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 0 20px;
+  margin-bottom: 20px;
+}
+
+/* 帖子容器 */
+.post-container {
+  display: flex;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* 用户信息区域 */
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 120px;
+  flex-shrink: 0;
+  margin-right: 16px;
+}
+
+.avatar-container {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.user-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
   object-fit: cover;
+}
+
+.op-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #409eff;
+  color: white;
+  font-size: 10px;
+  padding: 2px 4px;
+  border-radius: 2px;
+  font-weight: 500;
+}
+
+.user-details {
+  text-align: center;
+  width: 100%;
+}
+
+.username {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e88e5;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+
+.username:hover {
+  text-decoration: underline;
+}
+
+.user-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 12px;
+}
+
+.badge-icon {
+  font-size: 12px;
+}
+
+.badge-text {
+  color: #666;
+  font-size: 11px;
+}
+
+.badge-level {
+  background: #ffa726;
+  color: white;
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-weight: 500;
+}
+
+/* 帖子内容区域 */
+.post-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 帖子内容区域的标题样式已移至post-header */
+
+.post-body {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.post-body :deep(img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 8px 0;
+}
+
+.post-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  font-size: 12px;
+  color: #999;
+  flex-wrap: wrap;
+}
+
+.ip-location {
+  color: #999;
+}
+
+.report-btn {
+  background: none;
+  border: none;
+  color: #1e88e5;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+}
+
+.report-btn:hover {
+  text-decoration: underline;
+}
+
+.client-info {
+  color: #999;
+}
+
+.floor-number {
+  color: #999;
+  font-weight: 500;
+}
+
+.post-time {
+  color: #999;
+}
+
+.reply-btn {
+  background: none;
+  border: none;
+  color: #1e88e5;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+}
+
+.reply-btn:hover {
+  text-decoration: underline;
+}
+
+.reply-count {
+  color: #666;
+  margin-left: 2px;
+}
+
+/* 评论区域 */
+.comments-section {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #e4e7ed;
+  margin-top: 20px;
+  padding-top: 20px;
+}
+
+.comment-container {
+  display: flex;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.comment-container:last-child {
+  border-bottom: none;
 }
 
 .comment-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-}
-
-.comment-header {
-  display: flex;
-  align-items: center;
   gap: 8px;
-  margin-bottom: 4px;
-}
-
-.comment-author {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-}
-
-.user-level {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px 6px;
-  background: #f5f5f5;
-  border-radius: 4px;
-  font-size: 12px;
-}
-
-.level-icon {
-  font-size: 10px;
-  color: #666;
-}
-
-.level-text {
-  font-size: 12px;
-  color: #666;
-  font-weight: 500;
 }
 
 .comment-text {
   font-size: 14px;
   line-height: 1.5;
   color: #333;
-  margin: 4px 0;
 }
 
 .comment-meta {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-top: 4px;
-}
-
-.meta-left {
-  display: flex;
-  align-items: center;
+  justify-content: flex-end;
   gap: 8px;
-}
-
-.meta-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-left: auto;
+  font-size: 12px;
+  color: #999;
+  flex-wrap: wrap;
 }
 
 .comment-time {
-  font-size: 12px;
   color: #999;
 }
 
-.comment-location {
-  font-size: 12px;
-  color: #999;
-}
-
-.floor-number {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  font-size: 12px;
-  color: #999;
-  font-weight: 500;
-  z-index: 1;
-}
-
-.action-buttons {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-}
-
-.action-link {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 12px;
-  color: #999;
-  text-decoration: none;
-}
-
-.action-link:hover {
-  color: #666;
-}
-
-.reply-count {
-  color: #666;
-  font-size: 12px;
-  margin-left: 2px;
-}
-
-.like-btn.liked {
-  color: #ff4757;
-}
-
-.action-icon {
-  font-size: 12px;
-}
-
-/* 回复输入框样式 */
-.reply-form {
-  margin: 0;
-  padding: 16px;
-  background: white;
-  border-top: 1px solid #e4e7ed;
-  position: relative;
-}
-
-.reply-input-container {
-  position: relative;
-  width: 100%;
+/* 子回复容器 */
+.replies-container {
+  margin-left: 136px;
   background: white;
   border: 1px solid #e4e7ed;
-  border-radius: 8px;
+  border-radius: 4px;
+  margin-top: 8px;
   overflow: hidden;
 }
 
-.reply-textarea {
-  width: 100%;
-  padding: 16px 80px 16px 16px;
-  border: none;
-  border-radius: 0;
-  font-size: 14px;
-  line-height: 1.5;
-  resize: none;
-  min-height: 120px;
-  font-family: inherit;
-  transition: all 0.3s ease;
-  background: transparent;
-  box-sizing: border-box;
-  outline: none;
-}
-
-.reply-textarea:focus {
-  outline: none;
-}
-
-.reply-textarea::placeholder {
-  color: #a0a8b0;
-}
-
-.submit-reply-btn {
-  position: absolute;
-  bottom: 12px;
-  right: 12px;
-  padding: 8px 20px;
-  background: #8b5cf6;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.submit-reply-btn:hover:not(:disabled) {
-  background: #a0a8b0;
-}
-
-.submit-reply-btn:disabled {
-  background: #c0c4cc;
-  cursor: not-allowed;
-}
-
-/* 子回复列表容器样式 */
-.reply-list-container {
-  margin: 16px 0 0 52px;
-  background: white;
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.reply-list-header {
+.reply-container {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: 12px 16px;
-  background: #f8f9fa;
   border-bottom: 1px solid #e4e7ed;
 }
 
-.reply-list-title {
-  font-weight: 500;
-  color: #333;
-  font-size: 14px;
-}
-
-.collapse-replies-btn {
-  background: none;
-  border: none;
-  color: #666;
-  font-size: 12px;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-}
-
-.collapse-replies-btn:hover {
-  background: #e9ecef;
-  color: #333;
-}
-
-.reply-list {
-  padding: 0;
-}
-
-.reply-item {
-  display: flex;
-  gap: 12px;
-  padding: 12px 16px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.reply-item:last-child {
+.reply-container:last-child {
   border-bottom: none;
-}
-
-.reply-avatar {
-  flex-shrink: 0;
 }
 
 .reply-content {
@@ -1281,131 +658,237 @@ onMounted(() => {
   gap: 4px;
 }
 
-.reply-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.reply-author {
-  font-weight: 500;
-  color: #333;
-  font-size: 14px;
-}
-
-.reply-to {
-  color: #666;
-  font-size: 12px;
-}
-
 .reply-text {
-  color: #333;
-  line-height: 1.5;
   font-size: 14px;
+  line-height: 1.5;
+  color: #333;
 }
 
 .reply-meta {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-top: 4px;
+  justify-content: flex-end;
+  gap: 8px;
+  font-size: 12px;
+  color: #999;
 }
 
 .reply-time {
-  font-size: 12px;
   color: #999;
 }
 
-.reply-location {
-  font-size: 12px;
-  color: #999;
-  margin-left: 8px;
+/* 回复区域 */
+.reply-section {
+  background: white;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  margin-top: 8px;
+  overflow: hidden;
 }
 
-/* 我也说一句按钮 */
+/* 回复操作区域 */
 .reply-action-section {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
   padding: 12px 16px;
   background: #f8f9fa;
-  border-top: 1px solid #e4e7ed;
-  text-align: right;
+  border-bottom: 1px solid #e4e7ed;
 }
 
-.i-want-to-reply-btn {
+.reply-meta-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #999;
+}
+
+.question-icon {
+  color: #999;
+  font-size: 12px;
+}
+
+.collapse-reply-btn {
+  background: none;
+  border: none;
+  color: #409eff;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.collapse-reply-btn:hover {
+  text-decoration: underline;
+}
+
+/* 回复表单 */
+.reply-form {
+  padding: 12px 16px;
+  background: white;
+}
+
+.reply-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #409eff;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
+.reply-textarea:focus {
+  outline: none;
+  border-color: #409eff;
+}
+
+.reply-form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.image-upload-btn {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.image-upload-btn:hover {
+  background: #f5f5f5;
+  color: #409eff;
+}
+
+.upload-icon {
+  font-size: 18px;
+}
+
+.submit-reply-btn {
   background: #409eff;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   padding: 8px 16px;
   font-size: 14px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
-.i-want-to-reply-btn:hover {
+.submit-reply-btn:hover:not(:disabled) {
   background: #337ecc;
-  transform: translateY(-1px);
 }
 
-/* 加载更多按钮 */
-.load-more-section {
+.submit-reply-btn:disabled {
+  background: #c0c4cc;
+  cursor: not-allowed;
+}
+
+/* 发表评论区域 */
+.comment-form-section {
+  padding: 20px;
+  background: white;
+  border-top: 1px solid #e4e7ed;
+}
+
+.comment-form {
   display: flex;
-  justify-content: center;
-  margin-top: 20px;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.load-more-btn {
-  padding: 8px 16px;
-  background: #f5f5f5;
-  color: #666;
+.comment-textarea {
+  width: 100%;
+  padding: 12px;
   border: 1px solid #e4e7ed;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  border-radius: 4px;
   font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
 }
 
-.load-more-btn:hover {
-  background: #e9ecef;
-  color: #333;
+.comment-textarea:focus {
+  outline: none;
+  border-color: #409eff;
+}
+
+.submit-comment-btn {
+  background: #409eff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  align-self: flex-end;
+}
+
+.submit-comment-btn:hover:not(:disabled) {
+  background: #337ecc;
+}
+
+.submit-comment-btn:disabled {
+  background: #c0c4cc;
+  cursor: not-allowed;
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .skin-detail-container {
-    padding: 10px;
+  .guide-detail-container {
+    padding: 10px 0;
   }
 
-  .main-detail {
-    grid-template-columns: 1fr;
-    gap: 20px;
-    padding: 20px;
+  .main-content {
+    margin: 0 10px;
   }
 
-  .detail-title {
-    font-size: 24px;
-  }
-
-  .content-container,
-  .comments-container {
-    padding: 20px;
-  }
-
-  .comment-form {
-    padding: 16px;
-  }
-
-  .comment-item {
-    padding: 16px;
-  }
-
-  .overlay-actions {
+  .post-header {
     flex-direction: column;
+    align-items: flex-start;
     gap: 12px;
   }
 
-  .action-btn {
+  .post-actions {
     width: 100%;
-    justify-content: center;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .action-btn {
+    min-width: 50px;
+    padding: 3px 6px;
+    font-size: 11px;
+  }
+
+  .user-info {
+    width: 80px;
+    margin-right: 12px;
+  }
+
+  .user-avatar {
+    width: 50px;
+    height: 50px;
+  }
+
+  .replies-container {
+    margin-left: 92px;
+  }
+
+  .post-meta,
+  .comment-meta {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
   }
 }
 </style>
