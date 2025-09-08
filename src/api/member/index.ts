@@ -1,5 +1,5 @@
 import type {AxiosResponse} from "axios"
-import type {MemberBindMobileBo, MemberBindThirdPartyBo, MemberUserVo} from "@/api/member/types.ts"
+import type {MemberBindMobileBo, MemberUserVo} from "@/api/member/types.ts"
 import api from "@/utils/axios.ts"
 
 /**
@@ -15,11 +15,14 @@ export function memberGetProfileApi(): Promise<AxiosResponse<MemberUserVo>> {
 /**
  * 会员管理-绑定第三方用户
  */
-export function memberBindThirdPartyApi(data: MemberBindThirdPartyBo): Promise<AxiosResponse<boolean>> {
+export function memberBindThirdPartyApi(code: string): Promise<AxiosResponse<boolean>> {
   return api({
     url: '/member/user/bind-third-party',
     method: 'post',
-    data: data,
+    data: {
+      type: 'wechat',
+      code: code,
+    },
   });
 }
 

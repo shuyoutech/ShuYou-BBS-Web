@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import { useUserStore } from '@/store/modules/user.ts'
-import { ElMessage } from 'element-plus'
+import {useUserStore} from '@/store/modules/user.ts'
+import {ElMessage} from 'element-plus'
+import {ref} from 'vue'
+import {authAuthorize} from "@/api/auth";
+import {useShareStore} from "@/store/modules/share.ts";
+import {memberBindThirdPartyApi} from "@/api/member";
 
 interface Props {
   visible: boolean
@@ -8,6 +12,7 @@ interface Props {
 
 interface Emits {
   (e: 'update:visible', value: boolean): void
+
   (e: 'open-personal-center'): void
 }
 
@@ -15,6 +20,10 @@ defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const userStore = useUserStore()
+
+// 微信绑定弹窗相关
+const showWechatModal = ref(false)
+const qrCodeUrl = ref('')
 
 // 默认头像
 const defaultAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=DM'
@@ -38,12 +47,16 @@ const handlePhoneBinding = () => {
 
 // 处理微信绑定
 const handleWechatBinding = () => {
-  ElMessage.info('微信绑定功能开发中...')
+  if (isWechatBound()) {
+    return
+  }
+  showWechatModal.value = true
+  generateWechatQRCode()
 }
 
 // 检查是否绑定手机
 const isMobileBound = () => {
-  return userStore.userInfo?.mobile && userStore.userInfo.mobile.trim() !== ''
+  return userStore.userInfo?.mobile.length != 0
 }
 
 // 检查是否绑定微信
@@ -62,6 +75,25 @@ const handleLogout = () => {
   userStore.logout()
   ElMessage.success('已退出登录')
   emit('update:visible', false)
+}
+
+// 生成微信绑定二维码
+const generateWechatQRCode = async () => {
+  const response = await authAuthorize({
+    type: 'wechat',
+    callBack: '/local/wechat/bind/callback',
+  })
+  if (response.data) {
+    qrCodeUrl.value = response.data
+  } else {
+    ElMessage.error('获取二维码失败')
+  }
+}
+
+// 关闭微信绑定弹窗
+const closeWechatModal = () => {
+  showWechatModal.value = false
+  qrCodeUrl.value = ''
 }
 
 </script>
@@ -120,6 +152,41 @@ const handleLogout = () => {
       <button class="logout-btn" @click="handleLogout">
         退出登录
       </button>
+    </div>
+  </div>
+
+  <!-- 微信绑定弹窗 -->
+  <div v-if="showWechatModal" class="wechat-modal-overlay" @click="closeWechatModal">
+    <div class="wechat-modal" @click.stop>
+      <!-- 关闭按钮 -->
+      <button class="modal-close-btn" @click="closeWechatModal">
+        <FaIcon name="i-mdi:close"/>
+      </button>
+
+      <!-- 标题 -->
+      <h2 class="modal-title">微信快速绑定</h2>
+
+      <!-- 说明文字 -->
+      <p class="modal-desc">绑定完成后,您可以使用微信快速登录当前账号</p>
+
+      <!-- 二维码区域 -->
+      <div class="qr-code-container">
+        <iframe
+          v-show="qrCodeUrl"
+          :src="qrCodeUrl"
+          class="wechat-iframe"
+        />
+        <div v-show="!qrCodeUrl" class="qr-placeholder">
+          <FaIcon name="i-mdi:qrcode" class="qr-icon"/>
+          <span>点击上方按钮获取二维码</span>
+        </div>
+      </div>
+
+      <!-- 底部说明 -->
+      <div class="modal-footer">
+        <FaIcon name="i-mdi:wechat" class="wechat-icon"/>
+        <p class="footer-text">打开【手机微信】扫一扫,快速绑定</p>
+      </div>
     </div>
   </div>
 </template>
@@ -367,6 +434,172 @@ const handleLogout = () => {
   }
 
   .binding-left {
+    font-size: 13px;
+  }
+}
+
+/* 微信绑定弹窗样式 */
+.wechat-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.wechat-modal {
+  background: #1a1a1a;
+  border-radius: 16px;
+  padding: 30px;
+  width: 400px;
+  max-width: 90vw;
+  text-align: center;
+  position: relative;
+  animation: slideUp 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 500px;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.modal-title {
+  color: white;
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 15px 0;
+}
+
+.modal-desc {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+.qr-code-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+}
+
+.wechat-iframe {
+  width: 200px;
+  height: 200px;
+  background: white !important;
+  border-radius: 12px;
+  border: none !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  outline: none !important;
+}
+
+.qr-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: #666;
+  padding: 20px;
+}
+
+.qr-icon {
+  font-size: 48px;
+  color: #ccc;
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 0;
+}
+
+.wechat-icon {
+  color: #07c160;
+  font-size: 20px;
+}
+
+.footer-text {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  margin: 0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 480px) {
+  .wechat-modal {
+    width: 350px;
+    padding: 30px 20px 25px;
+  }
+
+  .modal-title {
+    font-size: 20px;
+  }
+
+  .qr-code-wrapper {
+    width: 180px;
+    height: 180px;
+    padding: 15px;
+  }
+
+  .modal-desc {
+    font-size: 13px;
+  }
+
+  .footer-text {
     font-size: 13px;
   }
 }

@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import {useShareStore} from "@/store/modules/share.ts";
+import {memberBindThirdPartyApi} from "@/api/member";
+import {useUserStore} from "@/store/modules/user.ts";
 // import {toast} from "vue-sonner";
 
 const router = useRouter()
@@ -113,6 +116,23 @@ function viewNews(news: any) {
   // router.push(`/news/detail/${news.id}`)
 }
 
+const shareStore = useShareStore()
+const userStore = useUserStore()
+watch(
+  () => shareStore.bindCode,
+  (newValue) => {
+    alert('111233' + newValue)
+    if (newValue) {
+      memberBindThirdPartyApi(newValue).then(()=>{
+        userStore.getUserInfo()
+        alert('5555555')
+      }).catch((error) => {
+        console.error('微信绑定失败:', error)
+      })
+    }
+  },
+)
+
 // 生命周期
 onMounted(() => {
   // 初始化数据
@@ -123,7 +143,7 @@ onMounted(() => {
   <div class="home-container">
     <!-- 背景装饰 -->
     <div class="background-decoration"></div>
-    
+
     <!-- 主要内容区域 -->
     <div class="main-content">
       <!-- 欢迎横幅 -->
@@ -275,7 +295,7 @@ onMounted(() => {
             </button>
           </div>
         </div>
-        
+
         <div class="news-list">
           <div
             v-for="news in filteredNews"

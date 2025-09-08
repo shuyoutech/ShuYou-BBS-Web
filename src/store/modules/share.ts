@@ -4,9 +4,13 @@ export const useShareStore = defineStore(
   () => {
     const code = ref('')
     const state = ref('')
+    const bindCode = ref('')
+    const bindState = ref('')
     return {
       code,
       state,
+      bindCode,
+      bindState,
     }
   },
 )

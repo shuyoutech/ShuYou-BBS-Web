@@ -117,7 +117,7 @@ async function getQrCode() {
   try {
     const response = await authAuthorize({
       type: 'wechat',
-      callBack: '/bbs/wechat/callback',
+      callBack: '/local/wechat/callback',
     })
     if (response.data) {
       qrCodeUrl.value = response.data
