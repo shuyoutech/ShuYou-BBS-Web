@@ -2,7 +2,8 @@
   <div class="app-footer">
     <div class="footer-content">
       <p class="copyright">
-        Copyright © 2025 苏州数游科技有限公司 版权所有 苏ICP备2025197988号
+        Copyright © 2025 苏州数游科技有限公司 版权所有
+        <a href="https://beian.miit.gov.cn/" target="_blank">苏ICP备2025197988号</a>
       </p>
     </div>
   </div>
