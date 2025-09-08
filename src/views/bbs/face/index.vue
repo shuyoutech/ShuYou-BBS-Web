@@ -110,8 +110,10 @@ const handleSearch = () => {
   faceList.length = 0
   faceCount.value = 0
   postPageApi(postQuery).then(({data}) => {
-    Object.assign(faceList, data.rows)
-    faceCount.value = Number(data.total)
+    if(data?.rows) {
+      Object.assign(faceList, data.rows)
+      faceCount.value = Number(data.total)
+    }
   });
 }
 

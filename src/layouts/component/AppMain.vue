@@ -65,7 +65,7 @@ router.afterEach(() => {
 .app-main {
   border-radius: 8px;
   .main-wrap {
-    height: calc(100vh - 162px);
+    height: calc(100vh - 101px);
     overflow-y: auto;
     overflow-x: hidden;
   }

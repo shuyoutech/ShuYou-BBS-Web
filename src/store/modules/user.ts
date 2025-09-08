@@ -1,4 +1,3 @@
-import router from '@/router'
 import {authAccessToken, authLogout, authSmsLogin} from "@/api/auth";
 import {memberGetProfileApi} from "@/api/member";
 
@@ -12,6 +11,7 @@ export const useUserStore = defineStore(
     const nickname = ref(localStorage.getItem('nickname') ?? '')
     const userInfo = ref(localStorage.getItem('userInfo') ? JSON.parse(<string>localStorage.getItem('userInfo')) : {})
     const permissions = ref<string[]>([])
+    const showAiLoginModal = ref<boolean>(false)
     const isLogin = computed(() => {
       return !!token.value
     })
@@ -27,6 +27,7 @@ export const useUserStore = defineStore(
       localStorage.setItem('token', res.data.accessToken)
       localStorage.setItem('userId', res.data.userId)
       token.value = res.data.accessToken
+      showAiLoginModal.value = false
       await getUserInfo()
     }
 
@@ -41,6 +42,7 @@ export const useUserStore = defineStore(
       localStorage.setItem('userId', res.data.userId)
       account.value = data.mobile
       token.value = res.data.accessToken
+      showAiLoginModal.value = false
       await getUserInfo()
     }
 
@@ -57,9 +59,7 @@ export const useUserStore = defineStore(
       // 此处仅清除计算属性 isLogin 中判断登录状态过期的变量，以保证在弹出登录窗口模式下页面展示依旧正常
       localStorage.removeItem('token')
       token.value = ''
-      router.push({
-        name: 'home',
-      }).then(logoutCleanStatus)
+      logoutCleanStatus()
     }
 
     // 登出后清除状态
@@ -99,6 +99,7 @@ export const useUserStore = defineStore(
       requestLogout,
       getUserInfo,
       accessToken,
+      showAiLoginModal,
     }
   },
 )

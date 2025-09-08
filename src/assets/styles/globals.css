@@ -112,12 +112,6 @@ textarea {
   margin: 0 !important;
 }
 
-.app-footer {
-  padding: 0 !important;
-  margin: 0 !important;
-  margin-top: -50px !important;
-}
-
 /* 强制移除main容器的默认间距 */
 .el-main {
   padding: 0 !important;

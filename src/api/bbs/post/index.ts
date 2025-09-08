@@ -9,7 +9,7 @@ export function postPageApi(data: PageQuery<PostQuery>): Promise<AxiosResponse<P
   return api({
     url: '/bbs/post/page',
     method: 'post',
-    data: data
+    data: data,
   });
 }
 

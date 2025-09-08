@@ -104,6 +104,7 @@ async function sendSms() {
 }
 
 function handleClose() {
+  userStore.showAiLoginModal = false
   phoneForm.value.phone = ''
   phoneForm.value.code = ''
   emit('update:visible', false)

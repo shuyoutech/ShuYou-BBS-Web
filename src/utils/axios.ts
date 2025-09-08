@@ -37,6 +37,7 @@ api.interceptors.request.use(
 // 处理错误信息的函数
 function handleError(error: any) {
   if (error.code === 401) {
+    useUserStore().showAiLoginModal = true
     useUserStore().requestLogout()
     throw error
   }
@@ -67,14 +68,12 @@ api.interceptors.response.use(
      */
     if (response.status !== 200) {
       if (response.data.msg !== '') {
-        handleError(response.data).then(() => {
-        })
+        handleError(response.data)
         return Promise.reject(response.data)
       }
     }
     if (response.status === 200 && response.data.code === 401) {
-      handleError(response.data).then(() => {
-      })
+      handleError(response.data)
       return Promise.reject(response.data)
     }
     if (response.headers['content-disposition']) {

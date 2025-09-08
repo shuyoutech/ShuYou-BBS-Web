@@ -20,7 +20,6 @@
     "lint:eslint": "eslint . --cache --fix",
     "lint:stylelint": "stylelint \"src/**/*.{css,scss,vue}\" --cache --fix",
     "preinstall": "npx only-allow pnpm",
-    "postinstall": "simple-git-hooks",
     "taze": "taze minor -wIr"
   },
   "dependencies": {
@@ -153,9 +152,5 @@
     "vite-plugin-vue-devtools": "^8.0.1",
     "vite-plugin-vue-meta-layouts": "^0.6.0",
     "vue-tsc": "^3.0.6"
-  },
-  "simple-git-hooks": {
-    "pre-commit": "pnpm lint-staged",
-    "preserveUnused": true
   }
 }

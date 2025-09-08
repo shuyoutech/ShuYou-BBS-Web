@@ -43,6 +43,10 @@ const changeLoginStatus = () => {
     appHeaderRef.value.updateUserState()
   }
 }
+const userStore = useUserStore()
+watch(() => userStore.showAiLoginModal, (newVal) => {
+  showAiLoginModal.value = newVal
+})
 </script>
 
 <template>
@@ -91,16 +95,10 @@ const changeLoginStatus = () => {
     flex-shrink: 0;
   }
   :deep(.el-footer) {
-    height: auto !important;
-    flex-shrink: 0;
-    padding: 0 !important;
-    margin: 0 !important;
+    height: 41px !important;
   }
   :deep(.el-main) {
-    background: transparent;
-    padding: 0 !important;
-    margin: 0 !important;
-    flex: 1;
+    background: #f5f5f5;
   }
 }
 </style>

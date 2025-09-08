@@ -16,7 +16,7 @@
 <style scoped>
 /* 底部版权信息样式 */
 .app-footer {
-  padding: 20px 0;
+  padding: 10px 0;
 }
 
 .footer-content {
@@ -38,7 +38,7 @@
 
 @media (max-width: 768px) {
   .app-footer {
-    padding: 15px 0;
+    padding: 10px 0;
   }
 
   .footer-content {
@@ -52,7 +52,7 @@
 
 @media (max-width: 480px) {
   .app-footer {
-    padding: 12px 0;
+    padding: 10px 0;
   }
 
   .footer-content {
