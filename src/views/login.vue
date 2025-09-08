@@ -95,12 +95,23 @@ async function sendSms() {
     ElMessage.error('请输入手机号')
     return
   }
-  startCountdown()
-  await authSendSms({
-    mobile: phone,
-    templateCode: 'SMS_491995068',
-  })
-  ElMessage.success('验证码已发送')
+
+  if (!/^1[3-9]\d{9}$/.test(phone)) {
+    ElMessage.error('请输入正确的手机号码')
+    return
+  }
+
+  try {
+    await authSendSms({
+      mobile: phone,
+      templateCode: 'SMS_491995068',
+    })
+    ElMessage.success('验证码已发送')
+    startCountdown()
+  } catch (error) {
+    ElMessage.error('发送验证码失败，请重试')
+    console.error('Send SMS error:', error)
+  }
 }
 
 function handleClose() {
@@ -117,7 +128,7 @@ async function getQrCode() {
   try {
     const response = await authAuthorize({
       type: 'wechat',
-      callBack: '/local/wechat/callback',
+      callBack: '/bbs/wechat/callback',
     })
     if (response.data) {
       qrCodeUrl.value = response.data
@@ -288,6 +299,7 @@ function stopCountdown() {
                   <button
                     type="button"
                     class="send-code-btn"
+                    :disabled="isCounting"
                     @click="sendSms"
                   >
                     {{ buttonText }}
@@ -1053,9 +1065,17 @@ html body .el-dialog.ai-login-modal .el-dialog__wrapper {
   transition: all 0.3s ease;
 }
 
-.send-code-btn:hover {
+.send-code-btn:hover:not(:disabled) {
   background: rgb(139 92 246 / 30%);
   border-color: rgb(139 92 246 / 50%);
+}
+
+.send-code-btn:disabled {
+  background: rgb(255 255 255 / 10%);
+  border-color: rgb(255 255 255 / 20%);
+  color: rgb(255 255 255 / 50%);
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .login-btn {
