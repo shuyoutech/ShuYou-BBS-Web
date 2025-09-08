@@ -643,14 +643,14 @@ onMounted(() => {
 .content-main {
   background: white;
   border-radius: 12px;
-  padding: 16px;
+  padding: 26px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .works-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: 26px;
   margin-bottom: 24px;
 }
 
@@ -1269,7 +1269,7 @@ onMounted(() => {
 
   .works-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    gap: 20px;
   }
 
   .modal-body {
