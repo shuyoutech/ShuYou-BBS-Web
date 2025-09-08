@@ -2,9 +2,8 @@
 import {useUserStore} from '@/store/modules/user.ts'
 import {ElMessage} from 'element-plus'
 import {ref} from 'vue'
-import {authAuthorize} from "@/api/auth";
-import {useShareStore} from "@/store/modules/share.ts";
-import {memberBindThirdPartyApi} from "@/api/member";
+import {authAuthorize, authSendSms} from "@/api/auth";
+import {memberBindMobileApi} from "@/api/member";
 
 interface Props {
   visible: boolean
@@ -25,6 +24,16 @@ const userStore = useUserStore()
 const showWechatModal = ref(false)
 const qrCodeUrl = ref('')
 
+// 手机绑定弹窗相关
+const showMobileModal = ref(false)
+const mobileForm = ref({
+  mobile: '',
+  code: ''
+})
+const isSendingCode = ref(false)
+const countdown = ref(0)
+let countdownTimer: NodeJS.Timeout | null = null
+
 // 默认头像
 const defaultAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=DM'
 
@@ -42,7 +51,12 @@ const getUserNickname = () => {
 
 // 处理手机绑定
 const handlePhoneBinding = () => {
-  ElMessage.info('手机绑定功能开发中...')
+  if (isMobileBound()) {
+    ElMessage.info('手机已绑定')
+    return
+  }
+  showMobileModal.value = true
+  mobileForm.value = { mobile: '', code: '' }
 }
 
 // 处理微信绑定
@@ -94,6 +108,82 @@ const generateWechatQRCode = async () => {
 const closeWechatModal = () => {
   showWechatModal.value = false
   qrCodeUrl.value = ''
+}
+
+// 发送验证码
+const sendVerificationCode = async () => {
+  if (!mobileForm.value.mobile) {
+    ElMessage.error('请输入手机号码')
+    return
+  }
+
+  if (!/^1[3-9]\d{9}$/.test(mobileForm.value.mobile)) {
+    ElMessage.error('请输入正确的手机号码')
+    return
+  }
+
+  try {
+    isSendingCode.value = true
+    // 这里应该调用发送验证码的API
+    await authSendSms({
+      mobile: mobileForm.value.mobile,
+      templateCode: 'SMS_491995068',
+    })
+
+    ElMessage.success('验证码已发送')
+
+    // 开始倒计时
+    countdown.value = 60
+    countdownTimer = setInterval(() => {
+      countdown.value--
+      if (countdown.value <= 0) {
+        clearInterval(countdownTimer!)
+        countdownTimer = null
+      }
+    }, 1000)
+  } catch (error) {
+    ElMessage.error('发送验证码失败')
+    console.error('Send SMS error:', error)
+  } finally {
+    isSendingCode.value = false
+  }
+}
+
+// 提交手机绑定
+const submitMobileBinding = async () => {
+  if (!mobileForm.value.mobile) {
+    ElMessage.error('请输入手机号码')
+    return
+  }
+
+  if (!mobileForm.value.code) {
+    ElMessage.error('请输入验证码')
+    return
+  }
+
+  try {
+    // 这里应该调用绑定手机的API
+    await memberBindMobileApi(mobileForm.value.mobile, mobileForm.value.code)
+    ElMessage.success('手机绑定成功！')
+
+    // 更新用户信息
+    await userStore.getUserInfo()
+    closeMobileModal()
+  } catch (error) {
+    ElMessage.error('绑定失败，请重试')
+    console.error('Bind mobile error:', error)
+  }
+}
+
+// 关闭手机绑定弹窗
+const closeMobileModal = () => {
+  showMobileModal.value = false
+  mobileForm.value = { mobile: '', code: '' }
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
+  }
+  countdown.value = 0
 }
 
 </script>
@@ -187,6 +277,65 @@ const closeWechatModal = () => {
         <FaIcon name="i-mdi:wechat" class="wechat-icon"/>
         <p class="footer-text">打开【手机微信】扫一扫,快速绑定</p>
       </div>
+    </div>
+  </div>
+
+  <!-- 手机绑定弹窗 -->
+  <div v-if="showMobileModal" class="mobile-modal-overlay">
+    <div class="mobile-modal" @click.stop>
+      <!-- 关闭按钮 -->
+      <button class="modal-close-btn" @click="closeMobileModal">
+        <FaIcon name="i-mdi:close"/>
+      </button>
+
+      <!-- 标题 -->
+      <h2 class="modal-title">手机快速绑定</h2>
+
+      <!-- 说明文字 -->
+      <p class="modal-desc">绑定完成后,您可以使用手机快速登录当前账号</p>
+
+      <!-- 表单区域 -->
+      <div class="form-container">
+        <!-- 手机号输入 -->
+        <div class="input-group">
+          <div class="input-wrapper">
+            <FaIcon name="i-mdi:phone" class="input-icon"/>
+            <input
+              v-model="mobileForm.mobile"
+              type="tel"
+              placeholder="请输入手机号码"
+              class="form-input"
+              maxlength="11"
+            />
+          </div>
+        </div>
+
+        <!-- 验证码输入 -->
+        <div class="input-group">
+          <div class="input-wrapper">
+            <FaIcon name="i-mdi:shield-key" class="input-icon"/>
+            <input
+              v-model="mobileForm.code"
+              type="text"
+              placeholder="请输入验证码"
+              class="form-input"
+              maxlength="6"
+            />
+            <button
+              class="send-code-btn"
+              :disabled="isSendingCode || countdown > 0"
+              @click="sendVerificationCode"
+            >
+              {{ countdown > 0 ? `${countdown}s` : '发送验证码' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 确定绑定按钮 -->
+      <button class="bind-btn" @click="submitMobileBinding">
+        确定绑定
+      </button>
     </div>
   </div>
 </template>
@@ -601,6 +750,160 @@ const closeWechatModal = () => {
 
   .footer-text {
     font-size: 13px;
+  }
+}
+
+/* 手机绑定弹窗样式 */
+.mobile-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.mobile-modal {
+  background: #1a1a1a;
+  border-radius: 16px;
+  padding: 30px;
+  width: 400px;
+  max-width: 90vw;
+  text-align: center;
+  position: relative;
+  animation: slideUp 0.3s ease-out;
+}
+
+.form-container {
+  margin: 30px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.input-group {
+  width: 100%;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.input-wrapper:focus-within {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+}
+
+.input-icon {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 18px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.form-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  font-size: 16px;
+  padding: 16px 0;
+  height: 50px;
+}
+
+.form-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.send-code-btn {
+  background: #8b5cf6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  margin-left: 12px;
+}
+
+.send-code-btn:hover:not(:disabled) {
+  background: #7c3aed;
+  transform: translateY(-1px);
+}
+
+.send-code-btn:disabled {
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.bind-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 20px;
+}
+
+.bind-btn:hover {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+}
+
+/* 响应式设计 */
+@media (max-width: 480px) {
+  .mobile-modal {
+    width: 350px;
+    padding: 25px 20px;
+  }
+
+  .modal-title {
+    font-size: 20px;
+  }
+
+  .form-container {
+    margin: 25px 0;
+    gap: 16px;
+  }
+
+  .form-input {
+    font-size: 14px;
+    padding: 14px 0;
+    height: 45px;
+  }
+
+  .send-code-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .bind-btn {
+    padding: 14px;
+    font-size: 15px;
   }
 }
 </style>
