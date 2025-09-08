@@ -95,7 +95,6 @@ declare module 'vue' {
     ImageUpload: typeof import('./../components/ImageUpload/index.vue')['default']
     PcasCascader: typeof import('./../components/PcasCascader/index.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
-    RouterMenu: typeof import('./../components/RouterMenu/index.vue')['default']
     RouterView: typeof import('vue-router')['RouterView']
   }
 }

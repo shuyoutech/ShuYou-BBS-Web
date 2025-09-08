@@ -21,7 +21,7 @@ export const useUserStore = defineStore(
       code: string
     }) {
       const res = await authAccessToken({
-        socialType: '01',
+        type: 'wechat',
         code: data.code,
       });
       localStorage.setItem('token', res.data.accessToken)

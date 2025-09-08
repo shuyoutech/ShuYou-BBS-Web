@@ -15,7 +15,7 @@ export interface AuthAuthorizeReq {
 }
 
 export interface AuthAccessTokenReq {
-  socialType: string;
+  type: string;
   code: string
 }
 
