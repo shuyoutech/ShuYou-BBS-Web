@@ -69,7 +69,7 @@ const form = reactive({
 
 const data = reactive<PostSaveBo>({
   gameId: '',
-  plate: 'face',
+  plate: 'skin', // 外形专区使用plate=2
   title: '',
   content: '',
   coverImgUrl: '',
@@ -85,7 +85,7 @@ const onSubmit = () => {
       data.coverImgUrl = form.coverImg[0]
       postSaveApi(data).then(() => {
         toast.success('发布成功')
-        router.push('/face')
+        router.push('/skin')
       })
     }
   })
@@ -103,28 +103,28 @@ const loadGames = () => {
   });
 }
 
-// 加载游戏标签
+// 加载外形标签
 const tags = ref<Options[]>();
-const loadFaceTags = () => {
-  dictOptionsApi("bbs_face_type").then(({data}) => {
+const loadSkinTags = () => {
+  dictOptionsApi("bbs_skin_type").then(({data}) => {
     tags.value = data;
   })
 }
 
 onMounted(() => {
   loadGames()
-  loadFaceTags()
+  loadSkinTags()
 })
 </script>
 
 <template>
-  <div class="face-upload-container">
+  <div class="skin-upload-container">
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-content">
         <div class="header-left">
           <FaIcon name="i-mdi:file-document-edit" class="header-icon"/>
-          <h1 class="page-title">发布帖子</h1>
+          <h1 class="page-title">发布外形作品</h1>
         </div>
         <div class="header-actions">
           <button class="btn btn-secondary" @click="goBack">返回</button>
@@ -175,12 +175,12 @@ onMounted(() => {
             </ElFormItem>
           </div>
 
-          <!-- 捏脸封面上传 -->
+          <!-- 外形封面上传 -->
           <div class="form-section">
-            <ElFormItem label="捏脸封面" prop="coverImg">
+            <ElFormItem label="外形封面" prop="coverImg">
               <div class="cover-upload-wrapper">
                 <div class="upload-instructions">
-                  <p>1. 封面需清晰并契合捏脸角色主题,好的封面有利于获得更多曝光;</p>
+                  <p>1. 封面需清晰并契合外形角色主题,好的封面有利于获得更多曝光;</p>
                   <p>2. 封面图支持JPG、JPEG、PNG; 200kb以内,建议图片尺寸:524×446或262×223;</p>
                 </div>
                 <FaImageUpload
@@ -207,7 +207,7 @@ onMounted(() => {
           </div>
         </ElForm>
         <div class="submit-button-container">
-          <button class="btn btn-primary" @click="onSubmit">发布帖子</button>
+          <button class="btn btn-primary" @click="onSubmit">发布作品</button>
         </div>
       </div>
     </div>
@@ -216,13 +216,13 @@ onMounted(() => {
 
 
 <style scoped>
-.face-upload-container {
+.skin-upload-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
   position: relative;
 }
 
-.face-upload-container::before {
+.skin-upload-container::before {
   content: '';
   position: absolute;
   top: 0;

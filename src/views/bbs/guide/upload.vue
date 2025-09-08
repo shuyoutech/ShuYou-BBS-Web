@@ -54,9 +54,6 @@ const formRules = ref<FormRules>({
   ],
   content: [
     {required: true, message: '请输入内容', trigger: 'blur'},
-  ],
-  coverImg: [
-    {required: true, message: '请上传封面', trigger: 'blur'},
   ]
 })
 const form = reactive({
@@ -64,15 +61,13 @@ const form = reactive({
   tags: [],
   title: '',
   content: '',
-  coverImg: [],
 })
 
 const data = reactive<PostSaveBo>({
   gameId: '',
-  plate: 'face',
+  plate: 'guide', // 外形专区使用plate=guide
   title: '',
   content: '',
-  coverImgUrl: '',
 })
 
 const onSubmit = () => {
@@ -82,10 +77,9 @@ const onSubmit = () => {
       data.tags = form.tags
       data.title = form.title
       data.content = form.content
-      data.coverImgUrl = form.coverImg[0]
       postSaveApi(data).then(() => {
         toast.success('发布成功')
-        router.push('/face')
+        router.push('/guide')
       })
     }
   })
@@ -103,28 +97,28 @@ const loadGames = () => {
   });
 }
 
-// 加载游戏标签
+// 加载外形标签
 const tags = ref<Options[]>();
-const loadFaceTags = () => {
-  dictOptionsApi("bbs_face_type").then(({data}) => {
+const loadSkinTags = () => {
+  dictOptionsApi("bbs_guide_type").then(({data}) => {
     tags.value = data;
   })
 }
 
 onMounted(() => {
   loadGames()
-  loadFaceTags()
+  loadSkinTags()
 })
 </script>
 
 <template>
-  <div class="face-upload-container">
+  <div class="skin-upload-container">
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-content">
         <div class="header-left">
           <FaIcon name="i-mdi:file-document-edit" class="header-icon"/>
-          <h1 class="page-title">发布帖子</h1>
+          <h1 class="page-title">发布外形作品</h1>
         </div>
         <div class="header-actions">
           <button class="btn btn-secondary" @click="goBack">返回</button>
@@ -175,27 +169,6 @@ onMounted(() => {
             </ElFormItem>
           </div>
 
-          <!-- 捏脸封面上传 -->
-          <div class="form-section">
-            <ElFormItem label="捏脸封面" prop="coverImg">
-              <div class="cover-upload-wrapper">
-                <div class="upload-instructions">
-                  <p>1. 封面需清晰并契合捏脸角色主题,好的封面有利于获得更多曝光;</p>
-                  <p>2. 封面图支持JPG、JPEG、PNG; 200kb以内,建议图片尺寸:524×446或262×223;</p>
-                </div>
-                <FaImageUpload
-                  v-model="form.coverImg"
-                  action="/file/upload"
-                  :width="500"
-                  :height="400"
-                  :dimension="{width: 500, height: 400}"
-                  :ext="['jpg', 'png', 'gif', 'bmp']"
-                  :after-upload="(response) => response.fileUrl"
-                />
-              </div>
-            </ElFormItem>
-          </div>
-
           <!-- 内容编辑器 -->
           <div class="form-section">
             <ElFormItem label="内容" prop="content">
@@ -207,7 +180,7 @@ onMounted(() => {
           </div>
         </ElForm>
         <div class="submit-button-container">
-          <button class="btn btn-primary" @click="onSubmit">发布帖子</button>
+          <button class="btn btn-primary" @click="onSubmit">发布作品</button>
         </div>
       </div>
     </div>
@@ -216,13 +189,13 @@ onMounted(() => {
 
 
 <style scoped>
-.face-upload-container {
+.skin-upload-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
   position: relative;
 }
 
-.face-upload-container::before {
+.skin-upload-container::before {
   content: '';
   position: absolute;
   top: 0;

@@ -87,6 +87,24 @@ const routes: any[] = [
           breadLevel: 0,
         },
       },
+      {
+        path: '/skin-upload',
+        name: 'skinUpload',
+        component: () => import('@/views/bbs/skin/upload.vue'),
+        meta: {
+          showInMenu: false,
+          title: '上传外形'
+        },
+      },
+      {
+        path: '/skin/detail/:id',
+        name: 'skinDetail',
+        component: () => import('@/views/bbs/skin/detail.vue'),
+        meta: {
+          showInMenu: false,
+          title: '外形详情'
+        },
+      },
     ],
   },
   {
@@ -103,6 +121,23 @@ const routes: any[] = [
         meta: {
           title: '攻略',
           breadLevel: 0,
+        },
+      }, {
+        path: '/guide-upload',
+        name: 'guideUpload',
+        component: () => import('@/views/bbs/guide/upload.vue'),
+        meta: {
+          showInMenu: false,
+          title: '上传攻略'
+        },
+      },
+      {
+        path: '/guide/detail/:id',
+        name: 'guideDetail',
+        component: () => import('@/views/bbs/guide/detail.vue'),
+        meta: {
+          showInMenu: false,
+          title: '攻略详情'
         },
       },
     ],

@@ -3,7 +3,7 @@
  */
 export interface PostQuery {
   status?: string;//帖子状态
-  plate?: string; //帖子板块
+  plate?: string; //帖子板块:捏脸专区-face,外形专区-skin,攻略专区-guide,公告专区-notice ,活动专区-event
   title?: string; //帖子标题
   tags?: string[];//帖子标签
   gameId?: string;//游戏ID
@@ -20,7 +20,7 @@ export interface PostVo {
   userId?: string;         //发帖用户ID
   userName?: string;       //用户名称
   userAvatar?: string;     //用户头像
-  plate?: string;          //帖子板块
+  plate?: string;          //帖子板块:捏脸专区-face,外形专区-skin,攻略专区-guide,公告专区-notice ,活动专区-event
   category?: string;       //帖子分类
   tags?: string[];         //标签集合
   tagNames?: string[];     //标签名称集合
@@ -49,10 +49,10 @@ export interface PostVo {
  */
 export interface PostSaveBo {
   gameId: string;          //游戏ID
-  plate: string;           //帖子板块
+  plate: string;           //帖子板块:捏脸专区-face,外形专区-skin,攻略专区-guide,公告专区-notice,活动专区-event
   title: string;           //帖子标题
   content: string;         //帖子内容
-  coverImgUrl: string;     //封面图片URL
+  coverImgUrl?: string;    //封面图片URL
   summary?: string;        //帖子摘要
   category?: string;       //帖子分类
   tags?: string[];         //标签集合

@@ -106,7 +106,7 @@ const handSort = (sort: string) => {
 
 // 查询捏脸列表
 const handleSearch = () => {
-  postQuery.query.plate = '1'
+  postQuery.query.plate = 'face'
   faceList.length = 0
   faceCount.value = 0
   postPageApi(postQuery).then(({data}) => {
